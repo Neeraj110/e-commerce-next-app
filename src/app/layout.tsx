@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import SessionWrapper from "@/utils/SessionProvider";
 import authOptions from "@/lib/authOption";
 import "./globals.css";
+import { Suspense } from "react";
+import Navbar from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +35,12 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionWrapper session={session}>{children}</SessionWrapper>
+        <SessionWrapper session={session}>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Navbar />
+          </Suspense>
+          {children}
+        </SessionWrapper>
       </body>
     </html>
   );

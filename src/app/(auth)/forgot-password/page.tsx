@@ -1,5 +1,6 @@
 "use client";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 function ForgotPassword() {
@@ -9,6 +10,7 @@ function ForgotPassword() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -20,7 +22,7 @@ function ForgotPassword() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(""); // Clear error before new request
+    setError("");
     setLoading(true);
 
     try {
@@ -28,9 +30,11 @@ function ForgotPassword() {
       if (data.error) {
         setError(data.error);
       }
+      router.push("/login");
     } catch (error: any) {
       setError(
-        error.response?.data?.error || "An error occurred while resetting the password"
+        error.response?.data?.error ||
+          "An error occurred while resetting the password"
       );
     } finally {
       setLoading(false);
