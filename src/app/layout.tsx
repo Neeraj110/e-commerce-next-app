@@ -1,5 +1,9 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getServerSession } from "next-auth";
+import SessionWrapper from "@/utils/SessionProvider";
+import authOptions from "@/lib/authOption";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,17 +21,19 @@ export const metadata: Metadata = {
   description: "E-commerce website",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <SessionWrapper session={session}>{children}</SessionWrapper>
       </body>
     </html>
   );

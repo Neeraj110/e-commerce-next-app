@@ -1,9 +1,10 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
 import bcrypt from "bcryptjs";
 
 export interface IUser extends Document {
+  _id: Types.ObjectId;
   email: string;
-  password: string;
+  password?: string;
   name: string;
   role: "user" | "admin";
   addresses: Array<{
@@ -20,9 +21,10 @@ export interface IUser extends Document {
 const UserSchema = new Schema(
   {
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String ,required: true },
     name: { type: String, required: true },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    isOAuthUser: { type: Boolean, default: false },
     addresses: [
       {
         street: { type: String, required: true },
@@ -38,16 +40,28 @@ const UserSchema = new Schema(
 );
 
 UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
+  const user = this as unknown as IUser & Document;
+
+  if (!user.isModified("password") || !user.password) {
+    return next();
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    user.password = hashedPassword;
+    next();
+  } catch (error) {
+    next(error as Error);
+  }
 });
 
 UserSchema.methods.comparePassword = async function (password: string) {
+  if (!this.password) {
+    return false;
+  }
   return bcrypt.compare(password, this.password);
 };
 
-// Ensure the model is not recompiled during hot-reloading in development
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
 
