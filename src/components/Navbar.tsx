@@ -20,8 +20,6 @@ const Navbar = () => {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  console.log();
-
   return (
     <nav className="border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -69,7 +67,7 @@ const Navbar = () => {
                     {session.user.image ? (
                       <Avatar>
                         <AvatarImage
-                          src={session.user.image}
+                          src={session.user.image }
                           alt={session.user.name || "User"}
                         />
                         <AvatarFallback>
