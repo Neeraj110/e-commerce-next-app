@@ -24,9 +24,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const product = await Product.findById(id)
-      .select("title price description categories images stock specifications ")
-      .lean();
+    const product = await Product.findById(id).lean();
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }

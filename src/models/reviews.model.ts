@@ -1,11 +1,18 @@
 import mongoose, { Schema, Model, Document } from "mongoose";
 
+// Define the interface for image data
+interface IImage {
+  url: string;
+  public_id: string;
+}
+
+// Update the main review interface
 export interface IReview extends Document {
   user: mongoose.Types.ObjectId;
   product: mongoose.Types.ObjectId;
   rating: number;
   comment: string;
-  images?: string[];
+  images: IImage[];
 }
 
 const ReviewSchema = new Schema(
@@ -14,7 +21,12 @@ const ReviewSchema = new Schema(
     product: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
-    images: [{ type: String }],
+    images: [
+      {
+        url: { type: String, required: true },
+        public_id: { type: String, required: true },
+      },
+    ],
   },
   { timestamps: true }
 );

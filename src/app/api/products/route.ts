@@ -4,6 +4,7 @@ import connectDb from "@/config/connectDb";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
 import { uploadOnCloudinary } from "@/config/cloudinary";
 
+
 export async function GET(req: NextRequest) {
   try {
     await connectDb();
@@ -63,8 +64,24 @@ export async function POST(req: NextRequest) {
     const description = formData.get("description") as string;
     const categories = formData.getAll("categories") as string[];
     const stock = parseInt(formData.get("stock") as string);
-    const specifications = formData.getAll("specifications") as string[];
+    const specificationsString = formData.get("specifications") as string;
+    const specifications = JSON.parse(specificationsString);
     const imageFiles: File[] = formData.getAll("images") as File[];
+
+    if (
+      !title ||
+      !price ||
+      !description ||
+      !categories ||
+      !stock ||
+      !specifications ||
+      !imageFiles
+    ) {
+      return NextResponse.json(
+        { error: "Please fill all the fields" },
+        { status: 400 }
+      );
+    }
 
     // Connect to Database
     await connectDb();
@@ -76,6 +93,15 @@ export async function POST(req: NextRequest) {
         return { url: result.url, public_id: result.public_id };
       })
     );
+
+    // console.log("uploadedImages", uploadedImages);
+
+    if (!uploadedImages || uploadedImages.length === 0) {
+      return NextResponse.json(
+        { error: "Image Upload Failed" },
+        { status: 500 }
+      );
+    }
 
     // Create Product Document
     const product = await Product.create({

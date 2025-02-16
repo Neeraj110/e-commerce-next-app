@@ -1,10 +1,10 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
 export interface IProduct extends Document {
-  name: string;
+  title: string;
   description: string;
   price: number;
-  categories: mongoose.Types.ObjectId[];
+  categories: string[];
   images: { url: string; public_id: string }[];
   stock: number;
   specifications: Record<string, string>;
@@ -19,7 +19,12 @@ const ProductSchema = new Schema(
     title: { type: String, required: true },
     price: { type: Number, required: true },
     description: { type: String, required: true },
-    categories: [{ type: Schema.Types.ObjectId, ref: "Category" }],
+    categories: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     images: [
       {
         url: { type: String, required: true },

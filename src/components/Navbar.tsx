@@ -64,10 +64,10 @@ const Navbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
-                    {session.user.image ? (
+                    {session?.user?.image ? (
                       <Avatar>
                         <AvatarImage
-                          src={session.user.image }
+                          src={session?.user?.image}
                           alt={session.user.name || "User"}
                         />
                         <AvatarFallback>
