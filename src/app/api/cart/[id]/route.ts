@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDb from "@/config/connectDb";
 import Cart from "@/models/card.model";
+import Product from "@/models/product.model";
 
 interface RouteContext {
   params: {
@@ -17,10 +18,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     const cart = await Cart.findById(id);
     if (!cart) {
-      return NextResponse.json(
-        { message: "Cart not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Cart not found" }, { status: 404 });
     }
 
     const itemIndex = cart.items.findIndex(
@@ -31,6 +29,21 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       return NextResponse.json(
         { message: "Item not found in cart" },
         { status: 404 }
+      );
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return NextResponse.json(
+        { message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    if (quantity > product.stock) {
+      return NextResponse.json(
+        { message: `Only ${product.stock} items in stock` },
+        { status: 400 }
       );
     }
 
@@ -58,10 +71,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     const cart = await Cart.findById(id);
     if (!cart) {
-      return NextResponse.json(
-        { message: "Cart not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Cart not found" }, { status: 404 });
     }
 
     const initialLength = cart.items.length;

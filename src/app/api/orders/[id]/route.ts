@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import mongoose from "mongoose";
 
+// src/app/api/orders/[id]/route.ts
 interface IParams {
   id: string;
 }

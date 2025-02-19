@@ -3,6 +3,7 @@ import connectDb from "@/config/connectDb";
 import Cart from "@/models/card.model";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
+import Product from "@/models/product.model";
 
 // 🛒 GET Cart - Fetch user cart using session
 export async function GET(req: NextRequest) {
@@ -51,6 +52,22 @@ export async function POST(req: NextRequest) {
     const userId = session.user.id;
     const { productId, quantity } = await req.json();
 
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return NextResponse.json(
+        { message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    if (product.stock < quantity) {
+      return NextResponse.json(
+        { message: `Only ${product.stock} items in stock` },
+        { status: 400 }
+      );
+    }
+
     let cart = await Cart.findOne({ user: userId });
 
     if (!cart) {
@@ -64,7 +81,15 @@ export async function POST(req: NextRequest) {
       );
 
       if (itemIndex > -1) {
-        cart.items[itemIndex].quantity += quantity;
+        const newQuantity = cart.items[itemIndex].quantity + quantity;
+        if (newQuantity > product.stock) {
+          return NextResponse.json(
+            { message: `Cannot add more than ${product.stock} items` },
+            { status: 400 }
+          );
+        }
+
+        cart.items[itemIndex].quantity = newQuantity;
       } else {
         cart.items.push({ product: productId, quantity });
       }
@@ -73,7 +98,7 @@ export async function POST(req: NextRequest) {
     await cart.save();
 
     return NextResponse.json(
-      { cart, message: "cart add successfuly" },
+      { cart, message: "Cart updated successfully" },
       { status: 201 }
     );
   } catch (error: any) {

@@ -10,7 +10,7 @@ export async function GET(
   try {
     await connectDb();
 
-    const { category } = params; // URL se dynamic category milegi
+    const { category } = params;
     const products = await Product.find({ category });
 
     return NextResponse.json({ products }, { status: 200 });

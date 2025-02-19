@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; // Import Avatar components
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 
 const Navbar = () => {
   const { data: session } = useSession();
@@ -65,15 +66,23 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
                     {session?.user?.image ? (
-                      <Avatar>
-                        <AvatarImage
-                          src={session?.user?.image}
-                          alt={session.user.name || "User"}
-                        />
-                        <AvatarFallback>
-                          {session.user.image || "Un"}
-                        </AvatarFallback>
-                      </Avatar>
+                      // <Avatar>
+                      //   <AvatarImage
+                      //     src={session?.user.image}
+                      //     alt={session.user.name || "User"}
+                      //   />
+                      //   <AvatarFallback>
+                      //     {session.user.name || "Un"}
+                      //   </AvatarFallback>
+                      // </Avatar>
+                      <Image 
+                        src={session?.user?.image}
+                        alt={session.user.name || "User"}
+                        className="rounded-full"
+                        width={32}
+                        height={32}
+
+                      />
                     ) : (
                       <User className="h-5 w-5" />
                     )}

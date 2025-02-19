@@ -4,6 +4,7 @@ import Order from "@/models/order.model";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 
+// src/app/api/payments/verify/route.ts
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession({ req, ...authOptions });
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      order_id, // MongoDB order ID
+      order_id,
     } = body;
 
     // First verify the payment signature
@@ -59,7 +60,8 @@ export async function POST(req: NextRequest) {
       {
         _id: order_id,
         user: session.user.id,
-        paymentStatus: { $ne: "completed" }, // Extra check to prevent double processing
+        paymentStatus: { $ne: "completed" },
+        status: "processing",
       },
       {
         $set: {

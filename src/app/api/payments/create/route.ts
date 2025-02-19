@@ -3,10 +3,17 @@ import Razorpay from "razorpay";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 
+//src/app/api/payments/create/route.ts
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_SECRET!,
 });
+
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET) {
+  throw new Error(
+    "Please add RAZORPAY_KEY_ID and RAZORPAY_SECRET to your .env.local file"
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { amount } = body;
 
     const options = {
-      amount: Number(amount * 100), // amount in smallest currency unit (paise)
+      amount: Number(amount * 100),
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
     };
@@ -35,9 +42,6 @@ export async function POST(req: NextRequest) {
       amount: order.amount,
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

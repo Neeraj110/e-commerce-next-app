@@ -3,6 +3,7 @@ import Order from "@/models/order.model";
 import authOptions from "@/lib/authOption";
 import { getServerSession } from "next-auth";
 
+//src/app/api/payments/cod/verify/route.ts
 export async function POST(req: NextRequest) {
   try {
     const { orderId } = await req.json();
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
           codVerified: true,
           paymentStatus: "completed",
           paidAt: new Date(),
-          status: "processing",
+          status: "delivered",
         },
       },
       { new: true }

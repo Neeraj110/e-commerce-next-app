@@ -7,6 +7,7 @@ import authOptions from "@/lib/authOption";
 import "./globals.css";
 import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
+import ClientProvider from "@/ClientProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,10 +37,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionWrapper session={session}>
-          <Suspense fallback={<div>Loading...</div>}>
-            <Navbar />
-          </Suspense>
-          {children}
+          <ClientProvider>
+            <Suspense fallback={<div>Loading...</div>}>
+              <Navbar />
+            </Suspense>
+            {children}
+          </ClientProvider>
         </SessionWrapper>
       </body>
     </html>
