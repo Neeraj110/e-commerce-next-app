@@ -64,3 +64,25 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    await connectDb();
+
+    const { id } = context.params;
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
+    const user = await User.findById(id).select("-password").lean();
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ user }, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

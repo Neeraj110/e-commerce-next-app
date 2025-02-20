@@ -9,13 +9,11 @@ export async function POST(request: NextRequest) {
 
     const existingAdmin = await User.findOne({ role: "admin" });
     if (existingAdmin) {
-      return NextResponse.json(
-        { error: "An admin already exists. Only one admin is allowed." },
-        { status: 400 }
-      );
+      const adminCheck = await adminAuthMiddleware(request);
+      if (adminCheck) return adminCheck;
     }
 
-    const { name, email, password, role = "admin" } = await request.json();
+    const { name, email, password } = await request.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -55,7 +53,7 @@ export async function POST(request: NextRequest) {
       name,
       email,
       password,
-      role,
+      role: "admin",
     });
 
     return NextResponse.json(
@@ -63,6 +61,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    console.error("Error creating/updating admin:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -75,7 +74,7 @@ export async function GET(request: NextRequest) {
     const adminCheck = await adminAuthMiddleware(request);
     if (adminCheck) return adminCheck;
 
-    const users = await User.find().lean();
+    const users = await User.find().select("-password").lean();
 
     return NextResponse.json(users, { status: 200 });
   } catch (error: any) {

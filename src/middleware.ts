@@ -8,18 +8,17 @@ const publicRoutes = [
   "/auth/login",
   "/auth/register",
   "/products",
+  "/product", // For single product pages
   "/categories",
   "/search",
   "/api/auth",
+  "/api/products", // For product API routes
 ];
 
 // Define admin-only routes
 const adminRoutes = [
-  "/admin",
-  "/admin/products",
-  "/admin/orders",
-  "/admin/users",
-  "/admin/settings",
+  "/admin-dashboard",
+  "/api/admin",
 ];
 
 export default withAuth(
@@ -31,28 +30,26 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const { pathname } = req.nextUrl;
 
-        // Allow all public routes
+        // Allow public routes
         if (publicRoutes.some((route) => pathname.startsWith(route))) {
           return true;
         }
 
         // Check admin routes
-        if (pathname.startsWith("/admin")) {
+        if (pathname.startsWith("/admin-dashboard")) {
           return token?.role === "admin";
         }
 
-        // Protected routes requiring authentication
-        const protectedRoutes = [
-          "/dashboard",
-          "/profile",
-          "/orders",
+        // Protected dashboard routes requiring authentication
+        const protectedDashboardRoutes = [
+          "/all-orders",
           "/cart",
-          "/checkout",
-          "/wishlist",
-          "/settings",
+          "/order-confirmation",
+          "/payment",
+          "/user-profile",
         ];
 
-        if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+        if (protectedDashboardRoutes.some((route) => pathname.includes(route))) {
           return !!token;
         }
 
@@ -76,25 +73,23 @@ export default withAuth(
   }
 );
 
-// Matcher configuration for optimized performance
+// Matcher configuration
 export const config = {
   matcher: [
-    // Protected routes
-    "/dashboard/:path*",
-    "/profile/:path*",
-    "/orders/:path*",
+    // Protected dashboard routes
+    "/all-orders/:path*",
     "/cart/:path*",
-    "/checkout/:path*",
-    "/wishlist/:path*",
-    "/settings/:path*",
+    "/order-confirmation/:path*",
+    "/payment/:path*",
+    "/user-profile/:path*",
 
-    // Admin routes
-    "/admin/:path*",
+    // Admin dashboard
+    "/admin-dashboard/:path*",
 
     // API routes (except public ones)
     "/api/:path*",
 
-    // Exclude public API routes and static files
-    "/((?!api/products|api/categories|api/search|_next/static|_next/image|favicon.ico).*)",
+    // Exclude public routes and static files
+    "/((?!products|product|api/products|api/categories|api/search|_next/static|_next/image|favicon.ico).*)",
   ],
 };

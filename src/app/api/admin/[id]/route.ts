@@ -68,3 +68,20 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function GET(request: NextRequest, context: RouteContext) {
+  try {
+    await connectDb();
+
+    const adminCheck = await adminAuthMiddleware(request);
+    if (adminCheck) return adminCheck;
+
+    const { id } = context.params;
+
+    const users = await User.findById(id).select("-password").lean();
+
+    return NextResponse.json(users, { status: 200 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
