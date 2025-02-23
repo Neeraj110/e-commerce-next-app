@@ -2,19 +2,24 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns:[
+    remotePatterns: [
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
-        pathname: "/**"
+        pathname: "/**",
       },
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
-        pathname: "/**"
-      }
-    ]
-  }
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "fakestoreapi.com",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

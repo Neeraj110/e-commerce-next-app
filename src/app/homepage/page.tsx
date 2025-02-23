@@ -7,18 +7,14 @@ import PaginationComponent from "@/components/PaginationComponent";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Navbar from "@/components/Navbar";
+import Link from "next/link";
 
 export default function HomePage() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const limit = 9;
-
   const { data, isLoading, isError } = useGetProductsQuery({
-    page: currentPage,
-    limit,
+    page: 1,
+    limit: 9,
   });
   const products = data?.products || [];
-  const totalProducts = data?.total || 0;
-  const totalPages = Math.ceil(totalProducts / limit);
 
   return (
     <>
@@ -60,13 +56,12 @@ export default function HomePage() {
         ) : (
           <>
             <ProductList products={products} />
-            {totalPages > 1 && (
-              <PaginationComponent
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            )}
+            <Link href="/product">
+              {" "}
+              <p className="text-sm mt-8 hover:text-xl hover:underline font-bold text-center ">
+                Show all products
+              </p>
+            </Link>
           </>
         )}
       </div>

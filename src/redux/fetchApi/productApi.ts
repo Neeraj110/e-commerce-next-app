@@ -14,8 +14,9 @@ export const productApi = createApi({
         params: {
           page: params.page || 1,
           limit: params.limit || 9,
-          category: params.category,
-          search: params.search,
+          category: params.category || null,
+          search: params.search || null,
+          price: params.price || null,
         },
       }),
       providesTags: ["Product"],

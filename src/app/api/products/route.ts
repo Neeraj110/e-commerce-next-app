@@ -4,24 +4,30 @@ import connectDb from "@/config/connectDb";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
 import { uploadOnCloudinary } from "@/config/cloudinary";
 
-
 export async function GET(req: NextRequest) {
   try {
     await connectDb();
 
     const searchParams = req.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const limit = parseInt(searchParams.get("limit") || "12", 12);
     const category = searchParams.get("category");
     const search = searchParams.get("search");
+    const price = searchParams.get("price");
 
     const query: any = {};
 
-    if (category) {
+    if (category && category !== "null") {
       query.categories = category;
     }
 
-    if (search) {
+    if (price && price !== "null") {
+      // Parse the price range (e.g., "0,80000" -> [0, 80000])
+      const [min, max] = price.split(",").map((p) => parseInt(p, 10));
+      query.price = { $gte: min, $lte: max };
+    }
+
+    if (search && search !== "null") {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
@@ -31,6 +37,7 @@ export async function GET(req: NextRequest) {
     const skip = (page - 1) * limit;
 
     const productsPromise = Product.find(query)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .select("-__v")
@@ -48,7 +55,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
 export async function POST(req: NextRequest) {
   try {
     // Admin Check

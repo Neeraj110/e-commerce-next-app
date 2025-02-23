@@ -8,6 +8,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import ClientProvider from "@/ClientProvider";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,8 +41,9 @@ export default async function RootLayout({
           <ClientProvider>
             <Suspense fallback={<div>Loading...</div>}>
               <Navbar />
+              <div className="mt-[4.5rem]">{children}</div>
+              <Footer />
             </Suspense>
-            {children}
           </ClientProvider>
         </SessionWrapper>
       </body>

@@ -16,13 +16,14 @@ export interface IProduct extends Document {
 
 const ProductSchema = new Schema(
   {
-    title: { type: String, required: true },
-    price: { type: Number, required: true },
-    description: { type: String, required: true },
+    title: { type: String, required: true, trim: true },
+    price: { type: Number, required: true, min: 0 },
+    description: { type: String, required: true, trim: true },
     categories: [
       {
         type: String,
         trim: true,
+        required: true,
       },
     ],
     images: [
@@ -31,15 +32,24 @@ const ProductSchema = new Schema(
         public_id: { type: String, required: true },
       },
     ],
-    stock: { type: Number, required: true },
-    specifications: { type: Map, of: String },
+    stock: { type: Number, required: true, min: 0 },
+    specifications: {
+      type: Map,
+      of: String,
+      default: new Map(),
+    },
     rating: {
-      rate: { type: Number, default: 0 },
-      count: { type: Number, default: 0 },
+      rate: { type: Number, default: 0, min: 0, max: 5 },
+      count: { type: Number, default: 0, min: 0 },
     },
   },
   { timestamps: true }
 );
+
+// Indexes for better query performance
+ProductSchema.index({ title: 1 });
+ProductSchema.index({ categories: 1 });
+ProductSchema.index({ price: 1 });
 
 const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>("Product", ProductSchema);
