@@ -21,8 +21,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "E-commerce",
-  description: "E-commerce website",
+  title: "Modern E-commerce Store",
+  description: "Shop the latest trends in fashion and accessories",
 };
 
 export default async function RootLayout({
@@ -33,7 +33,7 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -41,7 +41,8 @@ export default async function RootLayout({
           <ClientProvider>
             <Suspense fallback={<div>Loading...</div>}>
               <Navbar />
-              <div className="mt-[4.5rem]">{children}</div>
+              {/* <div className="mt-[4.5rem]">{children}</div> */}
+              {children}
               <Footer />
             </Suspense>
           </ClientProvider>

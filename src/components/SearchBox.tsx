@@ -71,12 +71,12 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
 
         {/* Suggestions dropdown */}
         {showSuggestions && searchQuery && products?.length > 0 && (
-          <Card className="absolute mt-1 w-full max-h-64 overflow-y-auto z-50 bg-white shadow-lg">
+          <Card className="absolute mt-1 w-full max-h-64 overflow-y-auto z-50  shadow-lg">
             <ul className="py-2">
               {products.map((product) => (
                 <li
                   key={product._id as string | number}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+                  className="px-4 py-2 hover:border hover:border-[2px] cursor-pointer flex justify-between items-center"
                   onClick={() => handleProductClick(product)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
