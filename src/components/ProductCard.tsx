@@ -16,7 +16,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
         <Image
           src={product.images[0]?.url}
           alt={product.title}
-          className="object-cover transition-transform hover:scale-105"
+          className="object-contain transition-transform hover:scale-105"
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           priority={index < 4}

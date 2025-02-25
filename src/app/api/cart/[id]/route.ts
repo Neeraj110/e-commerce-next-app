@@ -2,30 +2,48 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDb from "@/config/connectDb";
 import Cart from "@/models/card.model";
 import Product from "@/models/product.model";
+import { getServerSession } from "next-auth";
+import authOptions from "@/lib/authOption";
+import { isValidObjectId, Types } from "mongoose";
+import User from "@/models/user.model";
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
-// 🛒 PATCH (Update Cart Item Quantity)
-export async function PATCH(req: NextRequest, context: RouteContext) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDb();
-    const { productId, quantity } = await req.json();
-    const { id } = context.params;
+    const session = await getServerSession(authOptions);
 
-    const cart = await Cart.findById(id);
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not Authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    const { productId, quantity } = await req.json();
+    const { id } = await params;
+
+    if (!productId || !quantity || !id) {
+      return NextResponse.json(
+        { message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const cart = await Cart.findOne({ user: user._id });
     if (!cart) {
       return NextResponse.json({ message: "Cart not found" }, { status: 404 });
     }
 
-    const itemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === productId
-    );
-
-    if (itemIndex === -1) {
+    const item = cart.items.find((item: any) => item._id.toString() === id);
+    if (!item) {
       return NextResponse.json(
         { message: "Item not found in cart" },
         { status: 404 }
@@ -47,13 +65,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       );
     }
 
-    cart.items[itemIndex].quantity = quantity;
+    // Update quantity
+    item.quantity = quantity;
     await cart.save();
+    await cart.populate("items.product", "title price images stock");
 
     return NextResponse.json(
       {
-        message: `Item quantity updated to ${quantity}`,
         cart,
+        message: `Item quantity updated to ${quantity}`,
       },
       { status: 200 }
     );
@@ -62,22 +82,46 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 }
 
-// 🗑️ DELETE (Remove Item from Cart)
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } } // Changed from Types.ObjectId to string
+) {
   try {
     await connectDb();
-    const { productId } = await req.json();
-    const { id } = context.params;
+    const { id } = params; // Simplified - no need for await
 
-    const cart = await Cart.findById(id);
+    const session = await getServerSession(authOptions);
+
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        { message: "Invalid cart item ID" },
+        { status: 400 }
+      );
+    }
+
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not Authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    const cart = await Cart.findOne({ user: user._id });
+
     if (!cart) {
       return NextResponse.json({ message: "Cart not found" }, { status: 404 });
     }
 
     const initialLength = cart.items.length;
-    cart.items = cart.items.filter(
-      (item) => item.product.toString() !== productId
-    );
+
+    // Fixed: Use string comparison instead of direct object comparison
+    cart.items = cart.items.filter((item: any) => item._id.toString() !== id);
 
     if (cart.items.length === initialLength) {
       return NextResponse.json(

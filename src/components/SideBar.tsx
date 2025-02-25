@@ -32,7 +32,7 @@ const FilterContent = ({
   priceRange,
   onCategoryChange,
   onPriceRangeChange,
-  maxPrice = 10000,
+  maxPrice = 20000,
 }: Omit<SideBarProps, "isOpen" | "onClose">) => {
   const { data, isLoading, isError } = useGetCategoryQuery({});
   const categories = data?.category || [];
@@ -58,12 +58,12 @@ const FilterContent = ({
   }
 
   return (
-    <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
+    <ScrollArea className="h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] pr-4">
       {/* Category Section */}
       <div className="space-y-6">
         <div>
           <h3 className="text-lg font-semibold mb-4">Categories</h3>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 py-3">
             {Array.isArray(categories) &&
               categories.map((category, index) => (
                 <div
@@ -87,7 +87,7 @@ const FilterContent = ({
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold mb-4">Price Range</h3>
+          <h3 className="text-lg font-semibold mb-[1rem]">Price Range</h3>
           <Slider
             value={priceRange}
             onValueChange={onPriceRangeChange}
@@ -138,10 +138,10 @@ function SideBar(props: SideBarProps) {
           <SheetFooter className="mt-4">
             <Button
               variant="outline"
-              className="w-full"
+              className="text-sm bg-black text-white p-[0.3rem] rounded"
               onClick={() => {
                 props.onCategoryChange(null);
-                props.onPriceRangeChange([0, props.maxPrice || 10000]);
+                props.onPriceRangeChange([0, props.maxPrice || 20000]);
                 onClose();
               }}
             >
@@ -154,7 +154,7 @@ function SideBar(props: SideBarProps) {
       {/* Desktop Sidebar */}
       <div
         className={cn(
-          "hidden lg:block w-64 border-r bg-background h-[calc(100vh-4rem)] sticky top-16",
+          "hidden lg:block w-64 border-r bg-background h-[calc(100vh)] sticky top-16",
           "overflow-hidden"
         )}
       >
@@ -166,7 +166,7 @@ function SideBar(props: SideBarProps) {
               size="sm"
               onClick={() => {
                 props.onCategoryChange(null);
-                props.onPriceRangeChange([0, props.maxPrice || 10000]);
+                props.onPriceRangeChange([0, props.maxPrice || 20000]);
               }}
               className="text-sm bg-black text-white p-[0.3rem] rounded"
             >

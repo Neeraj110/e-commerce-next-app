@@ -14,17 +14,18 @@ export default function ProductsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 80000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000]);
   const limit = 13;
 
   const debouncedQuery = debouncedSearchQuery(searchQuery || "", 400);
+  const debouncedPrice = debouncedSearchQuery(priceRange.join(","), 400);
 
   const { data, isLoading, isError } = useGetProductsQuery({
     page: currentPage,
     limit,
     category: selectedCategory,
     search: debouncedQuery,
-    price: priceRange.join(","),
+    price: debouncedPrice,
   });
 
   const products = data?.products || [];

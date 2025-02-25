@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import SearchBox from "./SearchBox";
+import { ThemeToggle } from "@/utils/theme-toggle";
 
 const Cart = dynamic(() => import("./Cart"), { ssr: false });
 
@@ -69,6 +70,9 @@ const Navbar = () => {
 
         {/* Icons & User Menu */}
         <div className="flex items-center justify-between space-x-2 md:space-x-4">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Cart */}
           <Cart />
 
@@ -132,8 +136,14 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t bg-slate-300">
+        <div className="md:hidden border-t bg-slate-300 dark:bg-slate-800">
           <div className="space-y-1 px-4 py-3">
+            {/* Theme Toggle in Mobile Menu */}
+            <div className="py-2 px-3 flex items-center justify-between">
+              <span>Theme</span>
+              <ThemeToggle />
+            </div>
+
             {!session && (
               <Link href="/login">
                 <Button className="w-full justify-start" variant="ghost">
@@ -145,13 +155,13 @@ const Navbar = () => {
               <>
                 <Link
                   href="/profile"
-                  className="block py-2 px-3 hover:bg-gray-100 rounded-lg"
+                  className="block py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                 >
                   Profile
                 </Link>
                 <Link
                   href="/orders"
-                  className="block py-2 px-3 hover:bg-gray-100 rounded-lg"
+                  className="block py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                 >
                   Orders
                 </Link>

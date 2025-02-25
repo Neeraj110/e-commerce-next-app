@@ -1,6 +1,7 @@
 // cartSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Types } from "mongoose";
+import { useUpdateCartMutation } from "../fetchApi/cartApi";
 
 interface CartItem {
   product: {
@@ -12,6 +13,7 @@ interface CartItem {
     stock: number;
   };
   quantity: number;
+  _id: Types.ObjectId;
 }
 
 interface CartState {
@@ -80,7 +82,6 @@ const cartSlice = createSlice({
       if (item) {
         item.quantity = action.payload.quantity;
 
-        // Recalculate totals
         state.totalItems = state.items.reduce(
           (total, item) => total + item.quantity,
           0

@@ -62,10 +62,10 @@ const helpLinks = [
 
 function Footer() {
   return (
-    <footer className="bg-white pt-16 pb-12">
-      <div className="container mx-auto">
+    <footer className="bg-white pt-16 pb-12 mx-[2rem] md:mx-0">
+      <div className="md:container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-16">
-          <div className="lg:col-span-1 max-sm:px-[1.5rem]">
+          <div className="lg:col-span-1 ">
             <div className="flex items-center gap-2 mb-6">
               <ShoppingCart className="h-8 w-8 text-green-600" />
               <span className="text-2xl font-bold">EasyCary</span>
@@ -89,7 +89,7 @@ function Footer() {
             </div>
           </div>
 
-          <div className="pl-[1.5rem]">
+          <div className="">
             <h3 className="font-semibold text-lg mb-4">Department</h3>
             <ul className="space-y-3">
               {departmentLinks.map((link) => (

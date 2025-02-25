@@ -4,6 +4,7 @@ export const cartApi = createApi({
   reducerPath: "cartApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "/api/",
+    credentials: "include",
   }),
   tagTypes: ["Cart"],
   endpoints: (builder) => ({
@@ -20,18 +21,17 @@ export const cartApi = createApi({
       invalidatesTags: ["Cart"],
     }),
     updateCart: builder.mutation({
-      query: ({ data, id }) => ({
+      query: ({ productId, quantity, id }) => ({
         url: `cart/${id}`,
         method: "PATCH",
-        body: data,
+        body: { productId, quantity },
       }),
       invalidatesTags: ["Cart"],
     }),
     deleteCart: builder.mutation({
-      query: ({ productId, id }) => ({
+      query: (id) => ({
         url: `cart/${id}`,
         method: "DELETE",
-        body: { productId },
       }),
       invalidatesTags: ["Cart"],
     }),

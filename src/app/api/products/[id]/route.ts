@@ -5,17 +5,14 @@ import { isValidObjectId } from "mongoose";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
 import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
 // get a single product
-export async function GET(req: NextRequest, context: RouteContext) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDb();
-    const { id } = context.params;
+    const { id } = await params;
 
     if (!isValidObjectId(id)) {
       return NextResponse.json(
@@ -36,14 +33,17 @@ export async function GET(req: NextRequest, context: RouteContext) {
 }
 
 // update a product only for admin
-export async function PATCH(req: NextRequest, context: RouteContext) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     // Check for Admin Privileges
     const adminCheck = await adminAuthMiddleware(req);
     if (adminCheck) return adminCheck;
 
     // Extract Product ID from Params
-    const { id } = context.params;
+    const { id } = await params;
     if (!isValidObjectId(id)) {
       return NextResponse.json(
         { error: "Invalid product id" },
@@ -118,12 +118,15 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 }
 
 // delete a product only for admin
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const adminCheck = await adminAuthMiddleware(req);
     if (adminCheck) return adminCheck;
 
-    const { id } = context.params;
+    const { id } = await params;
     if (!isValidObjectId(id)) {
       return NextResponse.json(
         { error: "Invalid product id" },

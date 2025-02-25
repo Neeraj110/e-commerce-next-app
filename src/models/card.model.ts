@@ -1,16 +1,21 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 
 export interface ICart extends Document {
-  user: mongoose.Types.ObjectId;
+  user: string;
   items: Array<{
     product: mongoose.Types.ObjectId;
     quantity: number;
   }>;
+  totalItems: number;
+  totalAmount: any;
 }
 
 const CartSchema = new Schema(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user: {
+      type: String, // Changed from Schema.Types.ObjectId to String
+      required: true,
+    },
     items: [
       {
         product: {

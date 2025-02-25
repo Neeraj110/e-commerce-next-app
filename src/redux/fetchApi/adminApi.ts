@@ -1,7 +1,4 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { create } from "domain";
-import { get } from "http";
-import build from "next/dist/build";
 
 export const adminApi = createApi({
   reducerPath: "adminApi",
@@ -35,8 +32,17 @@ export const adminApi = createApi({
       invalidatesTags: ["Admin"],
     }),
     getAdmin: builder.query({
-      query: (id:string) => `${id}`,
+      query: (id: string) => `${id}`,
       providesTags: ["Admin"],
     }),
   }),
 });
+
+export const {
+  useCreateAdminMutation,
+  useDeleteAdminMutation,
+  useUpdateAdminMutation,
+  useGetAdminQuery,
+} = adminApi;
+
+export default adminApi;

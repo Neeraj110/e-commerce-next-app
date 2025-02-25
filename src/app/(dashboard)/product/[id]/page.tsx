@@ -21,7 +21,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 import { useGetSingleProductQuery } from "@/redux/fetchApi/productApi";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useAddcartMutation } from "@/redux/fetchApi/cartApi";
 
 const mockReviews = [
   {
@@ -54,11 +56,13 @@ const mockReviews = [
 ];
 
 export default function ProductPage() {
+  const { data: session } = useSession();
   const { id } = useParams();
   const { data, isLoading, isError } = useGetSingleProductQuery(id as string);
-  const dispatch = useDispatch();
+  const router = useRouter();
+  const [addCart] = useAddcartMutation();
 
-  const product = data?.product;
+  const product = data?.product || null;
 
   if (isLoading) {
     return (
@@ -80,10 +84,10 @@ export default function ProductPage() {
 
   const image = product.images?.[0]?.url || "/placeholder.svg";
   const categories = product.categories?.join(", ") || "Unknown";
-  const { title, rating, price, description, images, stock } = product;
+  const { _id, title, price, description, images, stock, rating } = product;
 
-  const handleAddToCart = () => {
-    dispatch(addToCart({ product, quantity: 1 }));
+  const handleAddToCart = async () => {
+    await addCart({ productId: _id, quantity: 1 });
   };
 
   const features = [
@@ -107,6 +111,14 @@ export default function ProductPage() {
     </div>
   );
 
+  const handleBuyNow = () => {
+    if (session) {
+      router.push("/checkout");
+    } else {
+      router.push("/login");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className=" flex h-16 items-center px-4 md:px-6 lg:px-8">
@@ -127,6 +139,7 @@ export default function ProductPage() {
                     src={image}
                     alt={title}
                     fill
+                    sizes="100%"
                     className="object-contain p-4"
                     priority
                   />
@@ -191,17 +204,32 @@ export default function ProductPage() {
 
             {/* Actions */}
             <div className="flex gap-4">
+              {session ? (
+                <Button
+                  size="lg"
+                  className="flex-1 text-lg py-6"
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
+                </Button>
+              ) : (
+                <Link href="/login">
+                  <Button size="lg" className="flex-1 text-lg py-6">
+                    Login to Add to Cart
+                  </Button>
+                </Link>
+              )}
               <Button
                 size="lg"
                 className="flex-1 text-lg py-6"
-                onClick={handleAddToCart}
+                onClick={handleBuyNow}
               >
-                Add to Cart
+                Buy Now
               </Button>
-              <Button variant="outline" size="icon" className="h-14 w-14">
+              <Button variant="outline" size="icon" className="h-12 w-12">
                 <Heart className="h-6 w-6" />
               </Button>
-              <Button variant="outline" size="icon" className="h-14 w-14">
+              <Button variant="outline" size="icon" className="h-12 w-12">
                 <Share2 className="h-6 w-6" />
               </Button>
             </div>
