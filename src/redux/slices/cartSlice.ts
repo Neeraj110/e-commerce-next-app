@@ -1,7 +1,6 @@
 // cartSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Types } from "mongoose";
-import { useUpdateCartMutation } from "../fetchApi/cartApi";
 
 interface CartItem {
   product: {

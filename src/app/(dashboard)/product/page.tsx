@@ -174,7 +174,9 @@ export default function ProductsPage() {
                   </h2>
                 </div>
               ) : (
-                <ProductList products={sortedProducts} isdes={true} />
+                <div className="py-15 md:py-0 px-[2rem] sm:px-0 md:px-0">
+                  <ProductList products={sortedProducts} isdes={true} />
+                </div>
               )}
 
               {/* Pagination */}

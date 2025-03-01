@@ -1,24 +1,27 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Order from "@/models/order.model";
 import Product from "@/models/product.model";
 import connectDb from "@/config/connectDb";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
-import mongoose from "mongoose";
+import User from "@/models/user.model";
 
 // POST /api/orders
 export async function POST(req: NextRequest) {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     await connectDb();
+
     const authSession = await getServerSession({ req, ...authOptions });
-    if (!authSession) {
+    if (!authSession?.user?.id) {
       return NextResponse.json(
         { error: "Please login first" },
         { status: 401 }
       );
+    }
+
+    const user = await User.findOne({ email: authSession.user.email });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -34,11 +37,11 @@ export async function POST(req: NextRequest) {
     const stockUpdates = [];
     let totalAmount = 0;
 
+    // Check stock availability and calculate total
     for (const item of body.items) {
-      const product = await Product.findById(item.product).session(session);
+      const product = await Product.findById(item.product);
 
       if (!product) {
-        await session.abortTransaction();
         return NextResponse.json(
           { error: `Product not found: ${item.product}` },
           { status: 404 }
@@ -46,7 +49,6 @@ export async function POST(req: NextRequest) {
       }
 
       if (product.stock < item.quantity) {
-        await session.abortTransaction();
         return NextResponse.json(
           { error: `Insufficient stock for product: ${product.title}` },
           { status: 400 }
@@ -63,29 +65,25 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    await Product.bulkWrite(stockUpdates, { session });
+    // Update stock for all products
+    await Product.bulkWrite(stockUpdates);
 
-    const order = await Order.create(
-      [
-        {
-          ...body,
-          user: authSession.user.id,
-          totalAmount,
-          status: "pending",
-          paymentStatus: "pending",
-        },
-      ],
-      { session }
-    );
+    // Create the order
+    const order = await Order.create({
+      ...body,
+      user: user._id,
+      totalAmount,
+      status: "pending",
+      paymentStatus: "pending",
+    });
 
-    await session.commitTransaction();
-
-    return NextResponse.json(order[0], { status: 201 });
+    return NextResponse.json(order, { status: 201 });
   } catch (error: any) {
-    await session.abortTransaction();
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  } finally {
-    session.endSession();
+    console.error("Error creating order:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to create order" },
+      { status: 500 }
+    );
   }
 }
 

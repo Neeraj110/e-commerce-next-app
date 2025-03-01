@@ -1,16 +1,16 @@
 // app/api/payment/cod/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Order from "@/models/order.model";
-import Product from "@/models/product.model";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
-import mongoose from "mongoose";
+import User from "@/models/user.model";
+import connectDb from "@/config/connectDb";
+import Product from "@/models/product.model";
 
 export async function POST(req: NextRequest) {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
+    await connectDb();
+
     const authSession = await getServerSession({ req, ...authOptions });
     if (!authSession) {
       return NextResponse.json(
@@ -19,10 +19,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const { items, shippingAddress, orderId } = body;
+    const user = await User.findOne({ email: authSession.user.email }).lean();
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
-    // Validate required fields
+    const body = await req.json();
+    const { items, shippingAddress } = body;
+
     if (!items?.length || !shippingAddress) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -30,17 +34,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify stock availability and calculate total
     let totalAmount = 0;
     const stockUpdates = [];
 
     for (const item of items) {
-      const product = await Product.findById(item.product)
-        .session(session)
-        .lean();
+      const product = await Product.findById(item.product).lean();
 
       if (!product) {
-        await session.abortTransaction();
         return NextResponse.json(
           { error: `Product not found: ${item.product}` },
           { status: 404 }
@@ -48,9 +48,10 @@ export async function POST(req: NextRequest) {
       }
 
       if (product.stock < item.quantity) {
-        await session.abortTransaction();
         return NextResponse.json(
-          { error: `Insufficient stock for product: ${product.title}` },
+          {
+            error: `Insufficient stock for product: ${product.title} , ${product.stock}`,
+          },
           { status: 400 }
         );
       }
@@ -65,45 +66,31 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Update product stock
-    if (stockUpdates.length > 0) {
-      await Product.bulkWrite(stockUpdates, { session });
-    }
-
-    // Create or update order
     const orderData = {
-      user: authSession.user.id,
+      user: user._id,
       items,
       totalAmount,
       shippingAddress,
       paymentMethod: "COD",
       paymentStatus: "pending",
-      status: "processing",
-      cod: true,
+      status: "shipped",
       codVerified: false,
     };
 
-    let order;
-    if (orderId) {
-      order = await Order.findOneAndUpdate(
-        { _id: orderId, user: authSession.user.id },
-        orderData,
-        { new: true, session }
-      );
-    } else {
-      order = await Order.create([orderData], { session });
-      order = order[0];
-    }
+    // Create the order
+    const order = await Order.create(orderData);
 
     if (!order) {
-      await session.abortTransaction();
       return NextResponse.json(
-        { error: "Failed to create/update order" },
+        { error: "Failed to create order" },
         { status: 500 }
       );
     }
 
-    await session.commitTransaction();
+    // Update stock only if order creation succeeds
+    if (stockUpdates.length > 0) {
+      await Product.bulkWrite(stockUpdates);
+    }
 
     return NextResponse.json(
       {
@@ -113,10 +100,6 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
-    await session.abortTransaction();
-
     return NextResponse.json({ error: error.message }, { status: 500 });
-  } finally {
-    session.endSession();
   }
 }

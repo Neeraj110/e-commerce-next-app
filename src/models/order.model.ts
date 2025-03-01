@@ -19,6 +19,11 @@ export interface IOrder extends Document {
   paymentMethod: string;
   totalAmount: number;
   trackingNumber?: string;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  razorpay_signature?: string;
+  codVerified?: boolean;
+  paidAt?: Date;
 }
 
 const OrderSchema = new Schema(
@@ -55,6 +60,11 @@ const OrderSchema = new Schema(
     paymentMethod: { type: String, required: true },
     totalAmount: { type: Number, required: true },
     trackingNumber: { type: String },
+    razorpay_order_id: { type: String },
+    razorpay_payment_id: { type: String },
+    razorpay_signature: { type: String },
+    codVerified: { type: Boolean, default: false },
+    paidAt: { type: Date },
   },
   { timestamps: true }
 );

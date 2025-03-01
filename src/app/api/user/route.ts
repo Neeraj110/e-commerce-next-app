@@ -2,29 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import User from "@/models/user.model";
 import connectDb from "@/config/connectDb";
 import { isValidObjectId } from "mongoose";
+import { getServerSession } from "next-auth";
+import authOptions from "@/lib/authOption";
 
-// src/app/api/user/[id]/route.ts
-
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
-export async function PATCH(request: NextRequest, context: RouteContext) {
+export async function PATCH(request: NextRequest) {
   try {
     await connectDb();
 
-    const { id } = context.params;
+    const session = await getServerSession(authOptions);
 
-    if (!isValidObjectId(id)) {
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (!isValidObjectId(user._id)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
     }
 
     const body = await request.json();
 
     const updatedUser = await User.findByIdAndUpdate(
-      id,
+      user._id,
       { $set: body },
       { new: true, runValidators: true }
     );
@@ -39,22 +43,27 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest) {
   try {
     await connectDb();
 
-    const { id } = context.params;
+    const session = await getServerSession(authOptions);
 
-    if (!isValidObjectId(id)) {
-      return NextResponse.json({ error: "Invalid user id" }, { status: 400 });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await User.findById(id);
+    const user = await User.findOne({ email: session.user.email });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    await User.findByIdAndDelete(id);
+
+    if (!isValidObjectId(user._id)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
+    await User.findByIdAndDelete(user._id);
 
     return NextResponse.json(
       { message: "User deleted successfully" },
@@ -65,17 +74,19 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest) {
   try {
     await connectDb();
 
-    const { id } = context.params;
+    const session = await getServerSession(authOptions);
 
-    if (!isValidObjectId(id)) {
-      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await User.findById(id).select("-password").lean();
+    const user = await User.findOne({ email: session.user.email })
+      .select("-password")
+      .lean();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

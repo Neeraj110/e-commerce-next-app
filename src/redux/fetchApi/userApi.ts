@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { json } from "stream/consumers";
 
 export const userApi = createApi({
   reducerPath: "userApi",
@@ -8,25 +9,40 @@ export const userApi = createApi({
   tagTypes: ["User"],
   endpoints: (builder) => ({
     getUser: builder.query({
-      query: (id: string) => `${id}`,
+      query: () => ``,
       providesTags: ["User"],
     }),
     updateUser: builder.mutation({
-      query: ({ data, id }) => ({
-        url: `${id}`,
+      query: ({ data }) => ({
+        url: ``,
         method: "PATCH",
         body: data,
       }),
       invalidatesTags: ["User"],
     }),
     deleteUser: builder.mutation({
-      query: (id) => ({
-        url: `${id}`,
+      query: () => ({
+        url: ``,
         method: "DELETE",
       }),
+    }),
+    updateAddress: builder.mutation({
+      query: (data) => ({
+        url: `address`,
+        method: "PATCH",
+        body: data,
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+      }),
+      invalidatesTags: ["User"],
     }),
   }),
 });
 
-export const { useGetUserQuery, useUpdateUserMutation, useDeleteUserMutation } =
-  userApi;
+export const {
+  useGetUserQuery,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+  useUpdateAddressMutation,
+} = userApi;

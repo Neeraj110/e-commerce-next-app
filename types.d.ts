@@ -1,4 +1,4 @@
-/* eslint-disable no-var */
+// types.d.ts
 import { Connection } from "mongoose";
 
 declare global {

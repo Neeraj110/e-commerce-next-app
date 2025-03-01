@@ -25,9 +25,10 @@ import {
   useUpdateCartMutation,
   useDeleteCartMutation,
 } from "@/redux/fetchApi/cartApi";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Cart() {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const cart = useSelector((state: RootState) => state.cart);
   const dispatch = useDispatch();
   const router = useRouter();
@@ -78,11 +79,17 @@ export default function Cart() {
   };
 
   const handleCheckOut = () => {
-    session ? router.push("/checkout") : router.push("/login");
+    if (session) {
+      setIsSheetOpen(false);
+      router.push("/checkout");
+    } else {
+      router.push("/login");
+      setIsSheetOpen(false);
+    }
   };
 
   return (
-    <Sheet>
+    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <ShoppingBag className="h-7 w-7" />

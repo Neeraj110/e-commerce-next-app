@@ -3,16 +3,24 @@ import crypto from "crypto";
 import Order from "@/models/order.model";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
+import User from "@/models/user.model";
+import connectDb from "@/config/connectDb";
 
-// src/app/api/payments/verify/route.ts
 export async function POST(req: NextRequest) {
   try {
+    await connectDb();
+
     const session = await getServerSession({ req, ...authOptions });
-    if (!session) {
+    if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Please login first" },
         { status: 401 }
       );
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -23,7 +31,7 @@ export async function POST(req: NextRequest) {
       order_id,
     } = body;
 
-    // First verify the payment signature
+    // Verify payment signature
     const sign = razorpay_order_id + "|" + razorpay_payment_id;
     const generated_signature = crypto
       .createHmac("sha256", process.env.RAZORPAY_SECRET!)
@@ -31,23 +39,26 @@ export async function POST(req: NextRequest) {
       .digest("hex");
 
     if (generated_signature !== razorpay_signature) {
+      console.log("Signature mismatch:", {
+        generated_signature,
+        razorpay_signature,
+      });
       return NextResponse.json(
         { error: "Invalid payment signature" },
         { status: 400 }
       );
     }
 
-    // Find the order first to verify it exists and belongs to the user
+    // Find the order
     const existingOrder = await Order.findOne({
       _id: order_id,
-      user: session.user.id,
+      user: user._id,
     });
 
     if (!existingOrder) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Check if payment was already processed
     if (existingOrder.paymentStatus === "completed") {
       return NextResponse.json(
         { error: "Payment already processed" },
@@ -55,20 +66,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update the order with payment details
+    const trackingNumber = `TRK${Math.floor(Math.random() * 1000000)}`;
+
+    // Update the order
     const updatedOrder = await Order.findOneAndUpdate(
       {
         _id: order_id,
-        user: session.user.id,
+        user: user._id,
         paymentStatus: { $ne: "completed" },
-        status: "processing",
       },
       {
         $set: {
           paymentStatus: "completed",
+          status: "processing",
           razorpay_order_id,
           razorpay_payment_id,
           razorpay_signature,
+          trackingNumber: trackingNumber,
           paidAt: new Date(),
         },
       },

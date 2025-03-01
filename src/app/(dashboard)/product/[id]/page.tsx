@@ -140,7 +140,7 @@ export default function ProductPage() {
         <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
           {/* Image Section */}
           <div className="space-y-4">
-            <Card className="overflow-hidden border-2">
+            <Card className="overflow-hidden border-2 ">
               <CardContent className="p-1 sm:p-2 md:p-4">
                 <div className="relative aspect-square rounded-lg bg-white dark:bg-gray-800">
                   <Image
@@ -232,13 +232,13 @@ export default function ProductPage() {
                   </Button>
                 </Link>
               )}
-              <Button
+              {/* <Button
                 size="default"
                 className="flex-1 text-sm sm:text-base py-4 sm:py-6 min-w-24"
                 onClick={handleBuyNow}
               >
                 Buy Now
-              </Button>
+              </Button> */}
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -317,6 +317,7 @@ export default function ProductPage() {
               </div>
             </Card>
 
+            {/* Reviews List */}
             <div className="lg:col-span-8">
               <div className="space-y-4 sm:space-y-6">
                 {mockReviews.map((review) => (

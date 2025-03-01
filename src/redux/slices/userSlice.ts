@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface Address {
+  _id: string;
   street: string;
   city: string;
   state: string;
@@ -24,12 +25,31 @@ interface UserState {
   error: string | null;
 }
 
-const initialState: UserState = {
-  currentUser: null,
-  isAuthenticated: false,
-  loading: false,
-  error: null,
+// Load initial state from sessionStorage
+const loadStateFromSession = (): UserState => {
+  try {
+    const serializedState = sessionStorage.getItem("userState");
+    if (serializedState === null) {
+      return {
+        currentUser: null,
+        isAuthenticated: false,
+        loading: false,
+        error: null,
+      };
+    }
+    return JSON.parse(serializedState);
+  } catch (err) {
+    console.error("Error loading state from sessionStorage:", err);
+    return {
+      currentUser: null,
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+    };
+  }
 };
+
+const initialState: UserState = loadStateFromSession();
 
 const userSlice = createSlice({
   name: "user",
@@ -39,6 +59,8 @@ const userSlice = createSlice({
       state.currentUser = action.payload;
       state.isAuthenticated = true;
       state.error = null;
+      // Save to sessionStorage
+      sessionStorage.setItem("userState", JSON.stringify(state));
     },
 
     addAddress: (state, action: PayloadAction<Address>) => {
@@ -52,6 +74,8 @@ const userSlice = createSlice({
           );
         }
         state.currentUser.addresses.push(action.payload);
+        // Save to sessionStorage
+        sessionStorage.setItem("userState", JSON.stringify(state));
       }
     },
 
@@ -60,6 +84,8 @@ const userSlice = createSlice({
         state.currentUser.addresses = state.currentUser.addresses.filter(
           (_, index) => index !== action.payload
         );
+        // Save to sessionStorage
+        sessionStorage.setItem("userState", JSON.stringify(state));
       }
     },
 
@@ -78,20 +104,25 @@ const userSlice = createSlice({
           );
         }
         state.currentUser.addresses[index] = address;
+        // Save to sessionStorage
+        sessionStorage.setItem("userState", JSON.stringify(state));
       }
     },
 
     logout: (state) => {
       state.currentUser = null;
       state.isAuthenticated = false;
+      sessionStorage.removeItem("userState");
     },
 
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
+      sessionStorage.setItem("userState", JSON.stringify(state));
     },
 
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
+      sessionStorage.setItem("userState", JSON.stringify(state));
     },
   },
 });
