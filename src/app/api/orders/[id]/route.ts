@@ -5,22 +5,20 @@ import connectDb from "@/config/connectDb";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import mongoose from "mongoose";
+import User from "@/models/user.model";
 
 // src/app/api/orders/[id]/route.ts
 interface IParams {
   id: string;
 }
 
-// DELETE order with stock restoration
 export async function DELETE(
   req: NextRequest,
   { params }: { params: IParams }
 ) {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    await connectDb();
+    await connectDb(); // Ensure the database is connected
+
     const authSession = await getServerSession({ req, ...authOptions });
 
     if (!authSession) {
@@ -30,15 +28,17 @@ export async function DELETE(
       );
     }
 
+    const user = await User.findOne({ email: authSession.user.email }).lean();
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const order = await Order.findOne({
       _id: params.id,
-      user: authSession.user.id,
-    })
-      .session(session)
-      .lean();
+      user: user._id,
+    }).lean();
 
     if (!order) {
-      await session.abortTransaction();
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
@@ -53,10 +53,9 @@ export async function DELETE(
       }));
 
       if (stockUpdates.length > 0) {
-        const result = await Product.bulkWrite(stockUpdates, { session });
+        const result = await Product.bulkWrite(stockUpdates);
 
         if (!result.ok) {
-          await session.abortTransaction();
           return NextResponse.json(
             { error: "Failed to restore product stock" },
             { status: 500 }
@@ -67,10 +66,8 @@ export async function DELETE(
 
     await Order.findOneAndDelete({
       _id: params.id,
-      user: authSession.user.id,
-    }).session(session);
-
-    await session.commitTransaction();
+      user: user._id,
+    });
 
     return NextResponse.json(
       {
@@ -80,11 +77,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: any) {
-    await session.abortTransaction();
-
     return NextResponse.json({ error: error.message }, { status: 500 });
-  } finally {
-    session.endSession();
   }
 }
 
@@ -101,9 +94,14 @@ export async function GET(req: NextRequest, { params }: { params: IParams }) {
       );
     }
 
+    const user = await User.findOne({ email: session.user.email }).lean();
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const order = await Order.findOne({
       _id: params.id,
-      user: session.user.id,
+      user: user?._id,
     });
 
     if (!order) {
@@ -131,11 +129,15 @@ export async function PATCH(req: NextRequest, { params }: { params: IParams }) {
         { status: 401 }
       );
     }
+    const user = await User.findOne({ email: session.user.email }).lean();
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
     const body = await req.json();
 
     const order = await Order.findOneAndUpdate(
-      { _id: params.id, user: session.user.id },
+      { _id: params.id, user: user._id },
       { $set: body },
       { new: true }
     );

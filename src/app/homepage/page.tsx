@@ -34,7 +34,7 @@ export default function HomePage() {
             </h1>
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
               Shop the latest trends and find your perfect style. Free shipping
-              on all orders over $50.
+              on all orders over ₹500.
             </p>
             <div className="flex w-full max-w-sm flex-col gap-4">
               <Button asChild className="w-full">
@@ -62,9 +62,9 @@ export default function HomePage() {
                       src={
                         featuredProducts.find((p: any) =>
                           p.categories.includes(category)
-                        )?.images[0]?.url || "/visa.png"
+                        )?.images[0]?.url || "/placeholder.jpg"
                       }
-                      alt={category}
+                      alt={category}  
                       className="object-cover transition-transform group-hover:scale-105"
                       fill
                       sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"

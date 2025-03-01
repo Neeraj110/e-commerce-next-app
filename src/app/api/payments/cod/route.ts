@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const trackingNumber = `TRK${Math.floor(Math.random() * 1000000)}`;
     const orderData = {
       user: user._id,
       items,
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
       paymentStatus: "pending",
       status: "shipped",
       codVerified: false,
+      trackingNumber,
     };
 
     // Create the order

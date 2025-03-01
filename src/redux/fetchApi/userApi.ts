@@ -37,6 +37,17 @@ export const userApi = createApi({
       }),
       invalidatesTags: ["User"],
     }),
+    deleteAddress: builder.mutation({
+      query: (id) => ({
+        url: `address`,
+        method: "DELETE",
+        body: { id },
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+      }),
+      invalidatesTags: ["User"],
+    }),
   }),
 });
 
@@ -45,4 +56,5 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useUpdateAddressMutation,
+  useDeleteAddressMutation,
 } = userApi;

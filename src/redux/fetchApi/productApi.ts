@@ -37,10 +37,7 @@ export const productApi = createApi({
       query: (category: string) => `products/category/${category}`,
       providesTags: ["Product"],
     }),
-    getReview: builder.query({
-      query: (id: string) => `products/reviews/${id}`,
-      providesTags: ["Product"],
-    }),
+
     addnewProduct: builder.mutation({
       query: (formdata) => ({
         url: `products`,
@@ -72,11 +69,23 @@ export const productApi = createApi({
       }),
       invalidatesTags: ["Product"],
     }),
+    getReview: builder.query({
+      query: (id: string) => `products/review/${id}`,
+      providesTags: ["Product"],
+    }),
     deleteReview: builder.mutation({
       query: ({ data, id }) => ({
         url: `products/review/${id}`,
         method: "DELETE",
         body: data,
+      }),
+      invalidatesTags: ["Product"],
+    }),
+    updateReview: builder.mutation({
+      query: ({ formdata, id }) => ({
+        url: `products/review/${id}`,
+        method: "PATCH",
+        body: formdata,
       }),
       invalidatesTags: ["Product"],
     }),
@@ -95,4 +104,5 @@ export const {
   useUpdateProductMutation,
   useAddReviewMutation,
   useDeleteReviewMutation,
+  useUpdateReviewMutation,
 } = productApi;

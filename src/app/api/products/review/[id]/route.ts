@@ -3,6 +3,9 @@ import connectDb from "@/config/connectDb";
 import { NextRequest, NextResponse } from "next/server";
 import Review from "@/models/reviews.model";
 import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
+import { getServerSession } from "next-auth";
+import authOptions from "@/lib/authOption";
+import User from "@/models/user.model";
 
 interface RouteContext {
   params: {
@@ -15,10 +18,18 @@ interface IImage {
   public_id: string;
 }
 
-// ✅ GET all reviews for a product
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
     await connectDb();
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not Authenticated" },
+        { status: 401 }
+      );
+    }
+
     const productId = context.params.id;
 
     const product = await Product.findById(productId);
@@ -36,20 +47,32 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ POST a new review
-// send userid in formdata
 export async function POST(req: NextRequest, context: RouteContext) {
   try {
     await connectDb();
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not Authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const productId = context.params.id;
     const formData = await req.formData();
 
     const rating = Number(formData.get("rating"));
     const comment = formData.get("comment") as string;
-    const userId = formData.get("userId") as string;
     const images = formData.getAll("images") as File[];
 
-    if (!rating || !comment || !userId || rating < 1 || rating > 5) {
+    if (!rating || !comment || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
@@ -59,7 +82,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const existingReview = await Review.findOne({
-      user: userId,
+      user: user._id,
       product: productId,
     });
     if (existingReview) {
@@ -78,7 +101,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const review = await Review.create({
-      user: userId,
+      user: user._id,
       product: productId,
       rating,
       comment,
@@ -99,7 +122,6 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ PATCH (Update review)
 export async function PATCH(req: NextRequest, context: RouteContext) {
   try {
     await connectDb();
@@ -119,7 +141,6 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     const review = await Review.findOne({
       _id: reviewId,
-      user: userId,
       product: context.params.id,
     });
     if (!review) {
@@ -170,14 +191,26 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 }
 
-// ✅ DELETE a review
-// send reviewId and userId
 export async function DELETE(req: NextRequest, context: RouteContext) {
   try {
     await connectDb();
-    const { reviewId, userId } = await req.json();
+    const session = await getServerSession(authOptions);
 
-    if (!reviewId || !userId) {
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not Authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    const { reviewId } = await req.json();
+
+    if (!reviewId) {
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 }
@@ -186,7 +219,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     const review = await Review.findOne({
       _id: reviewId,
-      user: userId,
+      user: user._id,
       product: context.params.id,
     });
     if (!review) {

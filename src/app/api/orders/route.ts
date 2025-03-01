@@ -97,7 +97,15 @@ export async function GET(req: NextRequest) {
         { status: 401 }
       );
     }
-    const orders = await Order.find({ user: session.user.id });
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const orders = await Order.find({ user: user._id }).populate(
+      "items.product"
+    );
     return NextResponse.json({ orders });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
