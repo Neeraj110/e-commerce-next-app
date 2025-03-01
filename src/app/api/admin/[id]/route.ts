@@ -69,19 +69,19 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
-  try {
-    await connectDb();
+// export async function GET(request: NextRequest, context: RouteContext) {
+//   try {
+//     await connectDb();
 
-    const adminCheck = await adminAuthMiddleware(request);
-    if (adminCheck) return adminCheck;
+//     const adminCheck = await adminAuthMiddleware(request);
+//     if (adminCheck) return adminCheck;
 
-    const { id } = context.params;
+//     const { id } = context.params;
 
-    const users = await User.findById(id).select("-password").lean();
+//     const users = await User.findById(id).select("-password").lean();
 
-    return NextResponse.json(users, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
+//     return NextResponse.json(users, { status: 200 });
+//   } catch (error: any) {
+//     return NextResponse.json({ error: error.message }, { status: 500 });
+//   }
+// }
