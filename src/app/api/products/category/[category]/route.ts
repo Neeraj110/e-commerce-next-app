@@ -5,12 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 // GET /api/products/category/{category}
 export async function GET(
   req: NextRequest,
-  { params }: { params: { category: string } }
+  { params }: { params: Promise<{ category: string }> }
 ) {
   try {
     await connectDb();
 
-    const { category } = params;
+    const { category } = await params;
     const products = await Product.find({ category });
 
     return NextResponse.json({ products }, { status: 200 });

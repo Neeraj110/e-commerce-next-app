@@ -4,12 +4,12 @@ import Cart from "@/models/card.model";
 import Product from "@/models/product.model";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
-import { isValidObjectId, Types } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import User from "@/models/user.model";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDb();
@@ -84,11 +84,11 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } } // Changed from Types.ObjectId to string
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDb();
-    const { id } = params; // Simplified - no need for await
+    const { id } = await params;
 
     const session = await getServerSession(authOptions);
 

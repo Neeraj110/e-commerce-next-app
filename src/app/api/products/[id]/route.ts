@@ -8,7 +8,7 @@ import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
 // get a single product
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDb();
@@ -35,7 +35,7 @@ export async function GET(
 // update a product only for admin
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check for Admin Privileges
@@ -120,7 +120,7 @@ export async function PATCH(
 // delete a product only for admin
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const adminCheck = await adminAuthMiddleware(req);
