@@ -36,10 +36,10 @@ export const ProductActions = ({ productId, stock }: ProductActionsProps) => {
     }
   }, [addCart, dispatch, productId, stock]);
 
-  const handleBuyNow = useCallback(async () => {
-    await handleAddToCart();
-    router.push(session ? "/checkout" : "/login");
-  }, [session, router]);
+  // const handleBuyNow = useCallback(async () => {
+  //   await handleAddToCart();
+  //   router.push(session ? "/checkout" : "/login");
+  // }, [session, router]);
 
   const handleShare = useCallback(() => {
     window.navigator.share({
@@ -71,14 +71,14 @@ export const ProductActions = ({ productId, stock }: ProductActionsProps) => {
         </Button>
       )}
 
-      <Button
+      {/* <Button
         size="default"
         className="flex-1 text-sm sm:text-base py-4 sm:py-6 min-w-24"
         onClick={handleBuyNow}
         aria-label="Buy now"
       >
         Buy Now
-      </Button>
+      </Button> */}
 
       <div className="flex gap-2">
         <Button
