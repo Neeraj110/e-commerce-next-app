@@ -84,12 +84,17 @@ const userSlice = createSlice({
 
       const newAddress = { ...action.payload };
       if (newAddress.isDefault) {
-        state.currentUser.addresses = state.currentUser.addresses.map((addr) => ({
-          ...addr,
-          isDefault: false,
-        }));
+        state.currentUser.addresses = state.currentUser.addresses.map(
+          (addr) => ({
+            ...addr,
+            isDefault: false,
+          })
+        );
       }
-      state.currentUser.addresses = [...state.currentUser.addresses, newAddress];
+      state.currentUser.addresses = [
+        ...state.currentUser.addresses,
+        newAddress,
+      ];
       saveStateToSession(state);
     },
 
@@ -115,10 +120,12 @@ const userSlice = createSlice({
       if (index === -1) return;
 
       if (address.isDefault) {
-        state.currentUser.addresses = state.currentUser.addresses.map((addr) => ({
-          ...addr,
-          isDefault: false,
-        }));
+        state.currentUser.addresses = state.currentUser.addresses.map(
+          (addr) => ({
+            ...addr,
+            isDefault: false,
+          })
+        );
       }
 
       state.currentUser.addresses[index] = {
@@ -149,10 +156,8 @@ const userSlice = createSlice({
   },
 });
 
-// Export types for use in components
 export type { User, Address, UserState };
 
-// Export actions and reducer
 export const {
   setUser,
   addAddress,
