@@ -19,7 +19,7 @@ import {
   useVerifyPaymentMutation,
   usePlaceCodOrderMutation,
 } from "@/redux/fetchApi/paymentApi";
-import { useUpdateAddressMutation } from "@/redux/fetchApi/userApi";
+import { useAddAddressMutation } from "@/redux/fetchApi/userApi";
 import { useCreateOrderMutation } from "@/redux/fetchApi/orderApi";
 import { useRemoveCartMutation } from "@/redux/fetchApi/cartApi";
 import { ContactInformation } from "@/components/ContactInformation";
@@ -40,8 +40,8 @@ export default function CheckoutPage() {
     useVerifyPaymentMutation();
   const [placeCodOrder, { isLoading: isPlaceCodOrderLoading }] =
     usePlaceCodOrderMutation();
-  const [updateAddress, { isLoading: isAddAddressLoading }] =
-    useUpdateAddressMutation();
+  const [addAdress, { isLoading: isAddAddressLoading }] =
+    useAddAddressMutation();
   const [createOrder, { isLoading: isCreateOrderLoading }] =
     useCreateOrderMutation();
   const [removeCart, { isLoading: isDeleteCartLoading }] =
@@ -132,7 +132,7 @@ export default function CheckoutPage() {
           isDefault: !currentUser.addresses?.length,
         };
 
-        const result = await updateAddress(newAddress).unwrap();
+        const result = await addAdress(newAddress).unwrap();
 
         if (result?.user?.addresses) {
           const addedAddress =

@@ -26,25 +26,27 @@ export const userApi = createApi({
         method: "DELETE",
       }),
     }),
-    updateAddress: builder.mutation({
+    addAddress: builder.mutation({
       query: (data) => ({
-        url: `address`,
-        method: "PATCH",
+        url: "address",
+        method: "POST",
         body: data,
-        headers: new Headers({
-          "Content-Type": "application/json",
-        }),
+      }),
+      invalidatesTags: ["User"],
+    }),
+    updateAddress: builder.mutation({
+      query: ({ id, data }) => ({
+        url: "address",
+        method: "PATCH",
+        body: { id, ...data },
       }),
       invalidatesTags: ["User"],
     }),
     deleteAddress: builder.mutation({
       query: (id) => ({
-        url: `address`,
+        url: "address",
         method: "DELETE",
         body: { id },
-        headers: new Headers({
-          "Content-Type": "application/json",
-        }),
       }),
       invalidatesTags: ["User"],
     }),
@@ -57,4 +59,5 @@ export const {
   useDeleteUserMutation,
   useUpdateAddressMutation,
   useDeleteAddressMutation,
+  useAddAddressMutation,
 } = userApi;

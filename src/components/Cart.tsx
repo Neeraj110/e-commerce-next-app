@@ -42,10 +42,6 @@ interface CartItem {
 }
 
 export default function Cart() {
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const cart = useSelector((state: RootState) => state.cart);
-  const dispatch = useDispatch();
-  const router = useRouter();
   const { data: session } = useSession();
   const {
     data,
@@ -54,6 +50,10 @@ export default function Cart() {
   } = useGetCartQuery({});
   const [updateCart, { isLoading: isUpdating }] = useUpdateCartMutation();
   const [deleteCart, { isLoading: isDeleting }] = useDeleteCartMutation();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const cart = useSelector((state: RootState) => state.cart);
+  const dispatch = useDispatch();
+  const router = useRouter();
 
   useEffect(() => {
     if (data && !isCartLoading && !isCartError) {
@@ -155,7 +155,7 @@ export default function Cart() {
           </div>
         ) : isCartError ? (
           <div className="flex h-full items-center justify-center text-red-600">
-            <p>Error loading cart</p>
+            <p>Error loading cart (Refresh)</p>
           </div>
         ) : (
           <div className="flex flex-1 flex-col gap-4 overflow-auto">

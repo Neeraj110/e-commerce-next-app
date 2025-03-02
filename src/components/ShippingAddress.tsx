@@ -3,7 +3,13 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Address } from "@/types";
 
 interface ShippingAddressProps {
@@ -34,7 +40,9 @@ export function ShippingAddress({
             <Checkbox
               id="useExistingAddress"
               checked={useExistingAddress}
-              onCheckedChange={(checked) => onUseExistingAddressChange(checked === true)}
+              onCheckedChange={(checked) =>
+                onUseExistingAddressChange(checked === true)
+              }
             />
             <label
               htmlFor="useExistingAddress"
@@ -56,7 +64,8 @@ export function ShippingAddress({
               <SelectContent>
                 {currentUser?.addresses.map((address: Address) => (
                   <SelectItem key={address._id} value={address._id || ""}>
-                    {address.street}, {address.city}, {address.state}, {address.zipCode}
+                    {address.street}, {address.city}, {address.state},{" "}
+                    {address.zipCode}
                     {address.isDefault && " (Default)"}
                   </SelectItem>
                 ))}
@@ -66,20 +75,16 @@ export function ShippingAddress({
         ) : (
           <>
             <div className="grid gap-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={addressData.street}
-                onChange={(e) => onAddressDataChange({ ...addressData, street: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
               <Label htmlFor="address">Street Address</Label>
               <Input
                 id="address"
                 value={addressData.street}
-                onChange={(e) => onAddressDataChange({ ...addressData, street: e.target.value })}
+                onChange={(e) =>
+                  onAddressDataChange({
+                    ...addressData,
+                    street: e.target.value,
+                  })
+                }
                 required
               />
             </div>
@@ -89,7 +94,12 @@ export function ShippingAddress({
                 <Input
                   id="city"
                   value={addressData.city}
-                  onChange={(e) => onAddressDataChange({ ...addressData, city: e.target.value })}
+                  onChange={(e) =>
+                    onAddressDataChange({
+                      ...addressData,
+                      city: e.target.value,
+                    })
+                  }
                   required
                 />
               </div>
@@ -98,7 +108,12 @@ export function ShippingAddress({
                 <Input
                   id="state"
                   value={addressData.state}
-                  onChange={(e) => onAddressDataChange({ ...addressData, state: e.target.value })}
+                  onChange={(e) =>
+                    onAddressDataChange({
+                      ...addressData,
+                      state: e.target.value,
+                    })
+                  }
                   required
                 />
               </div>
@@ -108,7 +123,12 @@ export function ShippingAddress({
               <Input
                 id="zip"
                 value={addressData.zipCode}
-                onChange={(e) => onAddressDataChange({ ...addressData, zipCode: e.target.value })}
+                onChange={(e) =>
+                  onAddressDataChange({
+                    ...addressData,
+                    zipCode: e.target.value,
+                  })
+                }
                 required
               />
             </div>
