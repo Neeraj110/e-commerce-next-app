@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -22,32 +21,42 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
   const router = useRouter();
 
   const debouncedQuery = debouncedSearchQuery(searchQuery, 400);
+  const { data, isLoading } = useGetProductsQuery({ search: debouncedQuery });
+  const products: IProduct[] = data?.products ?? [];
 
-  const { data, isLoading } = useGetProductsQuery({
-    search: debouncedQuery,
-  });
+  // Memoize handleProductClick to prevent unnecessary re-renders
+  const handleProductClick = useCallback(
+    (product: IProduct) => {
+      router.push(`/product/${product._id}`);
+      setShowSuggestions(false);
+      setSearchQuery("");
+    },
+    [router]
+  );
 
-  const products: IProduct[] = data?.products || [];
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+  // Handle outside click with useCallback for performance
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (
+      searchRef.current &&
+      !searchRef.current.contains(event.target as Node)
+    ) {
+      setShowSuggestions(false);
+    }
   }, []);
 
-  const handleProductClick = (product: IProduct) => {
-    router.push(`/product/${product._id}`);
-    setShowSuggestions(false);
-    setSearchQuery("");
-  };
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [handleClickOutside]);
+
+  // Handle input change with memoization
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      setShowSuggestions(!!e.target.value);
+    },
+    []
+  );
 
   const containerClasses = isDesktop
     ? "hidden md:flex flex-1 max-w-md mx-8"
@@ -62,67 +71,56 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
           placeholder="Search products..."
           className="pl-10 w-full"
           value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowSuggestions(true);
-          }}
-          // onFocus={() => setShowSuggestions(true)}
+          onChange={handleInputChange}
+          aria-label="Search products"
         />
 
-        {/* Suggestions dropdown */}
-        {showSuggestions && searchQuery && products?.length > 0 && (
-          <Card className="absolute mt-1 w-full max-h-64 overflow-y-auto z-50  shadow-lg">
-            <ul className="py-2">
-              {products.map((product) => (
-                <li
-                  key={product._id as string | number}
-                  className="px-4 py-2 hover:border hover:border-[2px] cursor-pointer flex justify-between items-center"
-                  onClick={() => handleProductClick(product)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleProductClick(product);
+        {showSuggestions && searchQuery && (
+          <Card className="absolute mt-1 w-full max-h-64 overflow-y-auto z-50 shadow-lg">
+            {isLoading ? (
+              <div className="p-4 text-center text-gray-500">Loading...</div>
+            ) : products.length > 0 ? (
+              <ul className="py-2">
+                {products.map((product) => (
+                  <li
+                    key={product._id as string}
+                    className="px-4 py-2  hover:border-2 cursor-pointer flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onClick={() => handleProductClick(product)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleProductClick(product)
                     }
-                  }}
-                  tabIndex={0}
-                  role="button"
-                >
-                  <div className="flex items-center gap-2">
-                    {product.images && product.images[0] && (
-                      <Image
-                        src={product.images[0].url}
-                        alt={product.title}
-                        width={40}
-                        height={40}
-                        className="object-cover rounded"
-                      />
-                    )}
-                    <span className="text-sm">{product.title}</span>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    ${product.price}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    tabIndex={0}
+                    role="option"
+                    aria-label={`Select ${product.title}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {product.images?.[0]?.url && (
+                        <Image
+                          src={product.images[0].url}
+                          alt={product.title}
+                          width={40}
+                          height={40}
+                          className="object-cover rounded"
+                          loading="lazy"
+                        />
+                      )}
+                      <span className="text-sm truncate max-w-[200px]">
+                        {product.title}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      ₹{product.price}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="p-4 text-center text-gray-500">
+                No products found
+              </div>
+            )}
           </Card>
         )}
-
-        {/* Loading state */}
-        {isLoading && searchQuery && (
-          <Card className="absolute mt-1 w-full p-4 text-center text-gray-500">
-            Loading...
-          </Card>
-        )}
-
-        {/* No results state */}
-        {!isLoading &&
-          showSuggestions &&
-          searchQuery &&
-          products.length === 0 && (
-            <Card className="absolute mt-1 w-full p-4 text-center text-gray-500">
-              No products found
-            </Card>
-          )}
       </div>
     </div>
   );

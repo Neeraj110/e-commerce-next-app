@@ -36,9 +36,18 @@ export const ProductActions = ({ productId, stock }: ProductActionsProps) => {
     }
   }, [addCart, dispatch, productId, stock]);
 
-  const handleBuyNow = useCallback(() => {
+  const handleBuyNow = useCallback(async () => {
+    await handleAddToCart();
     router.push(session ? "/checkout" : "/login");
   }, [session, router]);
+
+  const handleShare = useCallback(() => {
+    window.navigator.share({
+      title: "Product",
+      text: "Check out this product",
+      url: window.location.href,
+    });
+  }, [window.navigator.share, window.location.href]);
 
   return (
     <div className="flex gap-2 sm:gap-4 flex-wrap sm:flex-nowrap">
@@ -61,7 +70,7 @@ export const ProductActions = ({ productId, stock }: ProductActionsProps) => {
           <Link href="/login">Login to Add</Link>
         </Button>
       )}
-      {/* Uncomment if needed
+
       <Button
         size="default"
         className="flex-1 text-sm sm:text-base py-4 sm:py-6 min-w-24"
@@ -70,7 +79,7 @@ export const ProductActions = ({ productId, stock }: ProductActionsProps) => {
       >
         Buy Now
       </Button>
-      */}
+
       <div className="flex gap-2">
         <Button
           variant="outline"
@@ -85,6 +94,7 @@ export const ProductActions = ({ productId, stock }: ProductActionsProps) => {
           size="icon"
           className="h-10 w-10 sm:h-12 sm:w-12"
           aria-label="Share product"
+          onClick={handleShare}
         >
           <Share2 className="h-5 w-5 sm:h-6 sm:w-6" />
         </Button>

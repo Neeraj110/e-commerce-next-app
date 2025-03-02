@@ -69,12 +69,12 @@ function Orders() {
           <CardHeader>
             <CardTitle>No Orders Found</CardTitle>
             <CardDescription>
-              You haven’t placed any orders yet.
+              You haven't placed any orders yet.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link href="/products">Start Shopping</Link>
+              <Link href="/product">Start Shopping</Link>
             </Button>
           </CardContent>
         </Card>

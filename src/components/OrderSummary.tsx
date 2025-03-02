@@ -42,7 +42,7 @@ export function OrderSummary({
         {/* Discount Code */}
         <div className="flex gap-2">
           <Input
-            placeholder="Discount code"
+            placeholder="enter save10 code"
             value={discountCode}
             onChange={(e) => onDiscountCodeChange(e.target.value)}
           />

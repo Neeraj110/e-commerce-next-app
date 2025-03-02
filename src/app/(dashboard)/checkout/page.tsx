@@ -195,6 +195,7 @@ export default function CheckoutPage() {
             }).unwrap();
 
             dispatch(clearCart());
+            await removeCart({});
             router.push(`/orders/confirmation?id=${orderData._id}`);
           } catch (error: any) {
             setError(error.message || "Payment verification failed");

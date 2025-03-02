@@ -8,7 +8,7 @@ import {
   useDeleteReviewMutation,
   useUpdateReviewMutation,
 } from "@/redux/fetchApi/productApi";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,9 +35,9 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import Image from "next/image";
 
-// Schema for review form validation
+// Review schema
 const reviewSchema = z.object({
-  rating: z.number().min(1).max(5),
+  rating: z.number().min(1, "Rating must be 1-5").max(5, "Rating must be 1-5"),
   comment: z.string().min(10, "Comment must be at least 10 characters"),
   images: z.array(z.instanceof(File)).optional(),
 });
@@ -88,25 +88,22 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
   const [deleteReview, { isLoading: isDeleting }] = useDeleteReviewMutation();
   const [updateReview, { isLoading: isUpdating }] = useUpdateReviewMutation();
 
-  const reviews: Review[] = reviewsData || [];
+  const reviews: Review[] = reviewsData ?? [];
 
   const addForm = useForm<z.infer<typeof reviewSchema>>({
     resolver: zodResolver(reviewSchema),
-    defaultValues: {
-      rating: 5,
-      comment: "",
-      images: [],
-    },
+    defaultValues: { rating: 5, comment: "", images: [] },
   });
 
   const editForm = useForm<z.infer<typeof reviewSchema>>({
     resolver: zodResolver(reviewSchema),
-    defaultValues: {
-      rating: 5,
-      comment: "",
-      images: [],
-    },
+    defaultValues: { rating: 5, comment: "", images: [] },
   });
+
+  const isReviewOwner = useCallback(
+    (review: Review) => session?.user?.email === review.user.email,
+    [session]
+  );
 
   const handleSubmitReview = useCallback(
     async (values: z.infer<typeof reviewSchema>) => {
@@ -114,13 +111,10 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
         toast.error("Please log in to submit a review");
         return;
       }
-
       const formData = new FormData();
       formData.append("rating", values.rating.toString());
       formData.append("comment", values.comment);
-      if (values.images) {
-        values.images.forEach((image) => formData.append("images", image));
-      }
+      values.images?.forEach((image) => formData.append("images", image));
 
       try {
         await addReview({ formdata: formData, id: productId }).unwrap();
@@ -128,7 +122,7 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
         setIsAddReviewDialogOpen(false);
         addForm.reset();
       } catch (error: any) {
-        toast.error(error.data?.error || "Failed to submit review");
+        toast.error(error.data?.message || "Failed to submit review");
       }
     },
     [addReview, productId, session, addForm]
@@ -136,18 +130,15 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
 
   const handleUpdateReview = useCallback(
     async (values: z.infer<typeof reviewSchema>) => {
-      if (!session || !editingReview) {
-        toast.error("Unable to update review");
+      if (!session || !editingReview || !isReviewOwner(editingReview)) {
+        toast.error("Unauthorized to update this review");
         return;
       }
-
       const formData = new FormData();
       formData.append("rating", values.rating.toString());
       formData.append("comment", values.comment);
       formData.append("reviewId", editingReview._id);
-      if (values.images) {
-        values.images.forEach((image) => formData.append("images", image));
-      }
+      values.images?.forEach((image) => formData.append("images", image));
 
       try {
         await updateReview({ formdata: formData, id: productId }).unwrap();
@@ -156,41 +147,55 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
         editForm.reset();
         setEditingReview(null);
       } catch (error: any) {
-        toast.error(error.data?.error || "Failed to update review");
+        toast.error(error.data?.message || "Failed to update review");
       }
     },
-    [updateReview, productId, session, editingReview, editForm]
+    [updateReview, productId, session, editingReview, editForm, isReviewOwner]
   );
 
   const handleDeleteReview = useCallback(
-    async (reviewId: string) => {
+    async (review: Review) => {
+      if (!isReviewOwner(review)) {
+        toast.error("Unauthorized to delete this review");
+        return;
+      }
       if (!confirm("Are you sure you want to delete this review?")) return;
 
       try {
         await deleteReview({
-          data: { reviewId },
+          data: { reviewId: review._id },
           id: productId,
         }).unwrap();
         toast.success("Review deleted successfully");
       } catch (error: any) {
-        toast.error(error.data?.error || "Failed to delete review");
+        toast.error(error.data?.message || "Failed to delete review");
       }
     },
-    [deleteReview, productId, session]
+    [deleteReview, productId, isReviewOwner]
   );
 
-  const openEditDialog = (review: Review) => {
-    setEditingReview(review);
-    editForm.reset({
-      rating: review.rating,
-      comment: review.comment,
-      images: [],
-    });
-    setIsEditReviewDialogOpen(true);
-  };
+  const openEditDialog = useCallback(
+    (review: Review) => {
+      if (!isReviewOwner(review)) {
+        toast.error("You can only edit your own reviews");
+        return;
+      }
+      setEditingReview(review);
+      editForm.reset({
+        rating: review.rating,
+        comment: review.comment,
+        images: [],
+      });
+      setIsEditReviewDialogOpen(true);
+    },
+    [editForm, isReviewOwner]
+  );
 
-  if (isLoading) return <div>Loading reviews...</div>;
-  if (isError) return <div>Error loading reviews</div>;
+  if (isLoading) return <div className="text-center">Loading reviews...</div>;
+  if (isError)
+    return (
+      <div className="text-center text-red-500">Error loading reviews</div>
+    );
 
   return (
     <div className="mt-10 lg:mt-16">
@@ -262,10 +267,9 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                           type="file"
                           multiple
                           accept="image/*"
-                          onChange={(e) => {
-                            const files = Array.from(e.target.files || []);
-                            field.onChange(files);
-                          }}
+                          onChange={(e) =>
+                            field.onChange(Array.from(e.target.files || []))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -346,9 +350,9 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                       <p className="mt-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
                         {review.comment}
                       </p>
-                      {review.images && review.images.length > 0 && (
+                      {(review.images?.length ?? 0) > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
-                          {review.images.map((image, index) => (
+                          {review?.images?.map((image, index) => (
                             <div
                               key={index}
                               className="relative h-20 w-20 rounded-md overflow-hidden"
@@ -359,6 +363,7 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                                 fill
                                 sizes="80px"
                                 className="object-cover"
+                                loading="lazy"
                               />
                             </div>
                           ))}
@@ -366,7 +371,7 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                       )}
                     </div>
                   </div>
-                  {session?.user.id  && (
+                  {session?.user?.email && isReviewOwner(review) && (
                     <div className="flex gap-2">
                       <Button
                         variant="ghost"
@@ -380,7 +385,7 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDeleteReview(review._id)}
+                        onClick={() => handleDeleteReview(review)}
                         disabled={isDeleting}
                         aria-label="Delete review"
                       >
@@ -397,7 +402,7 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                     disabled
                   >
                     <ThumbsUp className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>Helpful ({review.helpful || 0})</span>
+                    <span>Helpful ({review.helpful ?? 0})</span>
                   </Button>
                   <Button
                     variant="outline"
@@ -406,7 +411,7 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                     disabled
                   >
                     <ThumbsDown className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span>Not Helpful ({review.unhelpful || 0})</span>
+                    <span>Not Helpful ({review.unhelpful ?? 0})</span>
                   </Button>
                 </div>
               </Card>
@@ -415,7 +420,6 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
         </div>
       </div>
 
-      {/* Edit Review Dialog */}
       <Dialog
         open={isEditReviewDialogOpen}
         onOpenChange={setIsEditReviewDialogOpen}
@@ -477,10 +481,9 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
                         type="file"
                         multiple
                         accept="image/*"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || []);
-                          field.onChange(files);
-                        }}
+                        onChange={(e) =>
+                          field.onChange(Array.from(e.target.files || []))
+                        }
                       />
                     </FormControl>
                     <FormMessage />
