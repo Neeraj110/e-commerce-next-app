@@ -4,10 +4,6 @@ import connectDb from "@/config/connectDb";
 import { isValidObjectId } from "mongoose";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
 
-interface RouteParams {
-  params: { id: string };
-}
-
 const validateRequest = async (request: NextRequest, id: string) => {
   await connectDb();
   const adminCheck = await adminAuthMiddleware(request);
@@ -19,7 +15,7 @@ const validateRequest = async (request: NextRequest, id: string) => {
   return null;
 };
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const validation = await validateRequest(request, params.id);
     if (validation) return validation;
@@ -41,7 +37,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const validation = await validateRequest(request, params.id);
     if (validation) return validation;
@@ -57,7 +53,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const validation = await validateRequest(request, params.id);
     if (validation) return validation;
