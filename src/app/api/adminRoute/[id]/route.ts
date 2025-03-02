@@ -15,14 +15,18 @@ const validateRequest = async (request: NextRequest, id: string) => {
   return null;
 };
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const validation = await validateRequest(request, params.id);
+    const resolvedParams = await params; // Await the params Promise
+    const validation = await validateRequest(request, resolvedParams.id);
     if (validation) return validation;
 
     const body = await request.json();
     const updatedUser = await User.findByIdAndUpdate(
-      params.id,
+      resolvedParams.id,
       { $set: body },
       { new: true, runValidators: true }
     );
@@ -37,12 +41,16 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const validation = await validateRequest(request, params.id);
+    const resolvedParams = await params; // Await the params Promise
+    const validation = await validateRequest(request, resolvedParams.id);
     if (validation) return validation;
 
-    const user = await User.findByIdAndDelete(params.id);
+    const user = await User.findByIdAndDelete(resolvedParams.id);
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
@@ -53,12 +61,16 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const validation = await validateRequest(request, params.id);
+    const resolvedParams = await params; // Await the params Promise
+    const validation = await validateRequest(request, resolvedParams.id);
     if (validation) return validation;
 
-    const user = await User.findById(params.id).select("-password").lean();
+    const user = await User.findById(resolvedParams.id).select("-password").lean();
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
