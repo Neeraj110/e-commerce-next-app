@@ -25,11 +25,21 @@ interface UserState {
   error: string | null;
 }
 
-// Load initial state from sessionStorage
+const SESSION_KEY = "userState";
+
+// Utility functions
+const saveStateToSession = (state: UserState) => {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.error("Error saving state to sessionStorage:", err);
+  }
+};
+
 const loadStateFromSession = (): UserState => {
   try {
-    const serializedState = sessionStorage.getItem("userState");
-    if (serializedState === null) {
+    const serializedState = sessionStorage.getItem(SESSION_KEY);
+    if (!serializedState) {
       return {
         currentUser: null,
         isAuthenticated: false,
@@ -37,9 +47,15 @@ const loadStateFromSession = (): UserState => {
         error: null,
       };
     }
-    return JSON.parse(serializedState);
+    const parsedState = JSON.parse(serializedState);
+    // Basic validation
+    if (!parsedState || typeof parsedState !== "object") {
+      throw new Error("Invalid session state");
+    }
+    return parsedState;
   } catch (err) {
     console.error("Error loading state from sessionStorage:", err);
+    sessionStorage.removeItem(SESSION_KEY); // Clean up invalid state
     return {
       currentUser: null,
       isAuthenticated: false,
@@ -56,77 +72,87 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     setUser: (state, action: PayloadAction<User>) => {
-      state.currentUser = action.payload;
+      state.currentUser = { ...action.payload }; // Deep copy to prevent mutations
       state.isAuthenticated = true;
+      state.loading = false;
       state.error = null;
-      // Save to sessionStorage
-      sessionStorage.setItem("userState", JSON.stringify(state));
+      saveStateToSession(state);
     },
 
     addAddress: (state, action: PayloadAction<Address>) => {
-      if (state.currentUser) {
-        if (action.payload.isDefault) {
-          state.currentUser.addresses = state.currentUser.addresses.map(
-            (addr) => ({
-              ...addr,
-              isDefault: false,
-            })
-          );
-        }
-        state.currentUser.addresses.push(action.payload);
-        // Save to sessionStorage
-        sessionStorage.setItem("userState", JSON.stringify(state));
+      if (!state.currentUser) return;
+
+      const newAddress = { ...action.payload };
+      if (newAddress.isDefault) {
+        state.currentUser.addresses = state.currentUser.addresses.map((addr) => ({
+          ...addr,
+          isDefault: false,
+        }));
       }
+      state.currentUser.addresses = [...state.currentUser.addresses, newAddress];
+      saveStateToSession(state);
     },
 
-    removeAddress: (state, action: PayloadAction<number>) => {
-      if (state.currentUser) {
-        state.currentUser.addresses = state.currentUser.addresses.filter(
-          (_, index) => index !== action.payload
-        );
-        // Save to sessionStorage
-        sessionStorage.setItem("userState", JSON.stringify(state));
-      }
+    removeAddress: (state, action: PayloadAction<string>) => {
+      if (!state.currentUser) return;
+
+      state.currentUser.addresses = state.currentUser.addresses.filter(
+        (addr) => addr._id !== action.payload
+      );
+      saveStateToSession(state);
     },
 
     updateAddress: (
       state,
-      action: PayloadAction<{ index: number; address: Address }>
+      action: PayloadAction<{ id: string; address: Partial<Address> }>
     ) => {
-      if (state.currentUser) {
-        const { index, address } = action.payload;
-        if (address.isDefault) {
-          state.currentUser.addresses = state.currentUser.addresses.map(
-            (addr) => ({
-              ...addr,
-              isDefault: false,
-            })
-          );
-        }
-        state.currentUser.addresses[index] = address;
-        // Save to sessionStorage
-        sessionStorage.setItem("userState", JSON.stringify(state));
+      if (!state.currentUser) return;
+
+      const { id, address } = action.payload;
+      const index = state.currentUser.addresses.findIndex(
+        (addr) => addr._id === id
+      );
+      if (index === -1) return;
+
+      if (address.isDefault) {
+        state.currentUser.addresses = state.currentUser.addresses.map((addr) => ({
+          ...addr,
+          isDefault: false,
+        }));
       }
+
+      state.currentUser.addresses[index] = {
+        ...state.currentUser.addresses[index],
+        ...address,
+      };
+      saveStateToSession(state);
     },
 
     logout: (state) => {
       state.currentUser = null;
       state.isAuthenticated = false;
-      sessionStorage.removeItem("userState");
+      state.loading = false;
+      state.error = null;
+      sessionStorage.removeItem(SESSION_KEY);
     },
 
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
-      sessionStorage.setItem("userState", JSON.stringify(state));
+      saveStateToSession(state);
     },
 
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
-      sessionStorage.setItem("userState", JSON.stringify(state));
+      state.loading = false;
+      saveStateToSession(state);
     },
   },
 });
 
+// Export types for use in components
+export type { User, Address, UserState };
+
+// Export actions and reducer
 export const {
   setUser,
   addAddress,
