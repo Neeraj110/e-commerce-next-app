@@ -64,7 +64,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const user = await User.findById(params.id).select("-password").lean();
     if (!user) {
-      return;
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json(user, { status: 200 });
