@@ -54,6 +54,9 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0].id);
   const [useExistingAddress, setUseExistingAddress] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+
+
+  
   const [addressData, setAddressData] = useState<Omit<Address, "_id">>({
     street: "",
     city: "",
