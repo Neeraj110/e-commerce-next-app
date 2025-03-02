@@ -8,6 +8,7 @@ import { orderApi } from "../fetchApi/orderApi";
 import { paymentApi } from "../fetchApi/paymentApi";
 
 const SESSION_KEY = "userState";
+const isBrowser = typeof window !== 'undefined';
 
 const appReducer = combineReducers({
   user: userSlice,
@@ -21,7 +22,9 @@ const appReducer = combineReducers({
 
 export const rootReducer = (state: any, action: any) => {
   if (action.type === "RESET_APP") {
-    sessionStorage.removeItem(SESSION_KEY);
+    if (isBrowser) {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
     return appReducer(undefined, action);
   }
   return appReducer(state, action);

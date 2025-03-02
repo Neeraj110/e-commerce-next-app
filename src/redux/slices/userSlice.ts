@@ -26,9 +26,12 @@ interface UserState {
 }
 
 const SESSION_KEY = "userState";
+const isBrowser = typeof window !== 'undefined';
 
 // Utility functions
 const saveStateToSession = (state: UserState) => {
+  if (!isBrowser) return;
+  
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
   } catch (err) {
@@ -37,15 +40,19 @@ const saveStateToSession = (state: UserState) => {
 };
 
 const loadStateFromSession = (): UserState => {
+  const defaultState = {
+    currentUser: null,
+    isAuthenticated: false,
+    loading: false,
+    error: null,
+  };
+  
+  if (!isBrowser) return defaultState;
+  
   try {
     const serializedState = sessionStorage.getItem(SESSION_KEY);
     if (!serializedState) {
-      return {
-        currentUser: null,
-        isAuthenticated: false,
-        loading: false,
-        error: null,
-      };
+      return defaultState;
     }
     const parsedState = JSON.parse(serializedState);
     // Basic validation
@@ -56,12 +63,7 @@ const loadStateFromSession = (): UserState => {
   } catch (err) {
     console.error("Error loading state from sessionStorage:", err);
     sessionStorage.removeItem(SESSION_KEY); // Clean up invalid state
-    return {
-      currentUser: null,
-      isAuthenticated: false,
-      loading: false,
-      error: null,
-    };
+    return defaultState;
   }
 };
 
@@ -140,7 +142,9 @@ const userSlice = createSlice({
       state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
-      sessionStorage.removeItem(SESSION_KEY);
+      if (isBrowser) {
+        sessionStorage.removeItem(SESSION_KEY);
+      }
     },
 
     setLoading: (state, action: PayloadAction<boolean>) => {
