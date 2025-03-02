@@ -7,18 +7,15 @@ import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
 interface IImage {
   url: string;
   public_id: string;
 }
 
-export async function GET(req: NextRequest, context: RouteContext) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDb();
     const session = await getServerSession(authOptions);
@@ -30,7 +27,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const productId = context.params.id;
+    const productId = params.id;
 
     const product = await Product.findById(productId);
     if (!product) {
@@ -47,7 +44,10 @@ export async function GET(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function POST(req: NextRequest, context: RouteContext) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDb();
     const session = await getServerSession(authOptions);
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const productId = context.params.id;
+    const productId = params.id;
     const formData = await req.formData();
 
     const rating = Number(formData.get("rating"));
@@ -122,7 +122,10 @@ export async function POST(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function PATCH(req: NextRequest, context: RouteContext) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDb();
     const formData = await req.formData();
@@ -141,7 +144,7 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 
     const review = await Review.findOne({
       _id: reviewId,
-      product: context.params.id,
+      product: params.id,
     });
     if (!review) {
       return NextResponse.json(
@@ -177,11 +180,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const allReviews = await Review.find({ product: context.params.id });
+    const allReviews = await Review.find({ product: params.id });
     const avgRating =
       allReviews.reduce((acc, curr) => acc + curr.rating, 0) /
       allReviews.length;
-    await Product.findByIdAndUpdate(context.params.id, {
+    await Product.findByIdAndUpdate(params.id, {
       rating: Number(avgRating.toFixed(1)),
     });
 
@@ -191,7 +194,10 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDb();
     const session = await getServerSession(authOptions);
@@ -220,7 +226,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     const review = await Review.findOne({
       _id: reviewId,
       user: user._id,
-      product: context.params.id,
+      product: params.id,
     });
     if (!review) {
       return NextResponse.json(
@@ -235,13 +241,13 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
 
     await Review.findByIdAndDelete(reviewId);
 
-    const allReviews = await Review.find({ product: context.params.id });
+    const allReviews = await Review.find({ product: params.id });
     const avgRating =
       allReviews.length > 0
         ? allReviews.reduce((acc, curr) => acc + curr.rating, 0) /
           allReviews.length
         : 0;
-    await Product.findByIdAndUpdate(context.params.id, {
+    await Product.findByIdAndUpdate(params.id, {
       rating: Number(avgRating.toFixed(1)),
     });
 
