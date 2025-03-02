@@ -8,16 +8,13 @@ import mongoose from "mongoose";
 import User from "@/models/user.model";
 
 // src/app/api/orders/[id]/route.ts
-interface IParams {
-  id: string;
-}
-
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: IParams }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await connectDb(); // Ensure the database is connected
+    await connectDb();
+    const { id } = await params;
 
     const authSession = await getServerSession({ req, ...authOptions });
 
@@ -34,7 +31,7 @@ export async function DELETE(
     }
 
     const order = await Order.findOne({
-      _id: params.id,
+      _id: id,
       user: user._id,
     }).lean();
 
@@ -65,7 +62,7 @@ export async function DELETE(
     }
 
     await Order.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       user: user._id,
     });
 
@@ -82,11 +79,14 @@ export async function DELETE(
 }
 
 // GET single order
-export async function GET(req: NextRequest, { params }: { params: IParams }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDb();
     const session = await getServerSession({ req, ...authOptions });
-
+    const { id } = await params;
     if (!session) {
       return NextResponse.json(
         { error: "Please login first" },
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest, { params }: { params: IParams }) {
     }
 
     const order = await Order.findOne({
-      _id: params.id,
+      _id: id,
       user: user?._id,
     });
 
@@ -118,11 +118,14 @@ export async function GET(req: NextRequest, { params }: { params: IParams }) {
 }
 
 // UPDATE order
-export async function PATCH(req: NextRequest, { params }: { params: IParams }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDb();
     const session = await getServerSession({ req, ...authOptions });
-
+    const { id } = await params;
     if (!session) {
       return NextResponse.json(
         { error: "Please login first" },
@@ -137,7 +140,7 @@ export async function PATCH(req: NextRequest, { params }: { params: IParams }) {
     const body = await req.json();
 
     const order = await Order.findOneAndUpdate(
-      { _id: params.id, user: user._id },
+      { _id: id, user: user._id },
       { $set: body },
       { new: true }
     );
