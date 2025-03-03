@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Image from "next/image";
 
 // Address schema for validation
 const addressSchema = z.object({
@@ -52,7 +53,8 @@ function Profile() {
   const { data, isLoading, error } = useGetUserQuery({});
   const [updateUser] = useUpdateUserMutation();
   const [deleteAddress] = useDeleteAddressMutation();
-  const [updateAddress, { isLoading: isUpdatingAddress }] = useUpdateAddressMutation();
+  const [updateAddress, { isLoading: isUpdatingAddress }] =
+    useUpdateAddressMutation();
   const [addAddress, { isLoading: isAddingAddress }] = useAddAddressMutation();
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -62,7 +64,13 @@ function Profile() {
 
   const addressForm = useForm<AddressFormData>({
     resolver: zodResolver(addressSchema),
-    defaultValues: { street: "", city: "", state: "", zipCode: "", country: "" },
+    defaultValues: {
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "",
+    },
   });
 
   const user = data?.user || {};
@@ -86,16 +94,19 @@ function Profile() {
     }
   }, [updateUser, userData]);
 
-  const handleDeleteAddress = useCallback(async (addressId: string) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
-    try {
-      await deleteAddress(addressId).unwrap();
-      toast.success("Address deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete address");
-      console.error("Failed to delete address:", error);
-    }
-  }, [deleteAddress]);
+  const handleDeleteAddress = useCallback(
+    async (addressId: string) => {
+      if (!confirm("Are you sure you want to delete this address?")) return;
+      try {
+        await deleteAddress(addressId).unwrap();
+        toast.success("Address deleted successfully");
+      } catch (error) {
+        toast.error("Failed to delete address");
+        console.error("Failed to delete address:", error);
+      }
+    },
+    [deleteAddress]
+  );
 
   const handleUpdateAddress = useCallback(
     async (addressId: string, values: AddressFormData) => {
@@ -127,16 +138,19 @@ function Profile() {
     [addAddress, addressForm]
   );
 
-  const openEditAddress = useCallback((address: any) => {
-    setIsEditingAddress(address._id);
-    addressForm.reset({
-      street: address.street || "",
-      city: address.city || "",
-      state: address.state || "",
-      zipCode: address.zipCode || "",
-      country: address.country || "",
-    });
-  }, [addressForm]);
+  const openEditAddress = useCallback(
+    (address: any) => {
+      setIsEditingAddress(address._id);
+      addressForm.reset({
+        street: address.street || "",
+        city: address.city || "",
+        state: address.state || "",
+        zipCode: address.zipCode || "",
+        country: address.country || "",
+      });
+    },
+    [addressForm]
+  );
 
   // Early returns after all hooks
   if (isLoading) {
@@ -167,15 +181,32 @@ function Profile() {
           <Card>
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage
-                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.name || "User"}`}
+                {user?.image ? (
+                  <Image
+                    src={user.image}
+                    alt={user.name || "User"}
+                    className="rounded-full"
+                    width={32}
+                    height={32}
+                    priority
                   />
-                  <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
-                </Avatar>
+                ) : (
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${
+                        user?.name || "User"
+                      }`}
+                    />
+                    <AvatarFallback>
+                      {user?.name?.charAt(0) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
                 <div>
                   <CardTitle>User Profile</CardTitle>
-                  <CardDescription>Manage your personal information</CardDescription>
+                  <CardDescription>
+                    Manage your personal information
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -195,7 +226,11 @@ function Profile() {
                   </div>
                   <div>
                     <Label>Account Created</Label>
-                    <p>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}</p>
+                    <p>
+                      {user?.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString()
+                        : "N/A"}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -205,7 +240,9 @@ function Profile() {
                     <Input
                       id="name"
                       value={userData.name}
-                      onChange={(e) => setUserData({ ...userData, name: e.target.value })}
+                      onChange={(e) =>
+                        setUserData({ ...userData, name: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -213,7 +250,9 @@ function Profile() {
                     <Input
                       id="email"
                       value={userData.email}
-                      onChange={(e) => setUserData({ ...userData, email: e.target.value })}
+                      onChange={(e) =>
+                        setUserData({ ...userData, email: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -242,9 +281,14 @@ function Profile() {
               <div className="flex justify-between items-center">
                 <div>
                   <CardTitle>Saved Addresses</CardTitle>
-                  <CardDescription>Manage your delivery addresses</CardDescription>
+                  <CardDescription>
+                    Manage your delivery addresses
+                  </CardDescription>
                 </div>
-                <Dialog open={isAddAddressDialogOpen} onOpenChange={setIsAddAddressDialogOpen}>
+                <Dialog
+                  open={isAddAddressDialogOpen}
+                  onOpenChange={setIsAddAddressDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button size="sm">
                       <Plus className="mr-2 h-4 w-4" /> Add Address
@@ -254,21 +298,36 @@ function Profile() {
                     <DialogHeader>
                       <DialogTitle>Add New Address</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={addressForm.handleSubmit(handleAddAddress)} className="space-y-4">
-                      {["street", "city", "state", "zipCode", "country"].map((field) => (
-                        <div key={field} className="space-y-2">
-                          <Label htmlFor={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
-                          <Input
-                            id={field}
-                            {...addressForm.register(field as keyof AddressFormData)}
-                          />
-                          {addressForm.formState.errors[field as keyof AddressFormData]?.message && (
-                            <p className="text-sm text-red-500">
-                              {addressForm.formState.errors[field as keyof AddressFormData]?.message}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                    <form
+                      onSubmit={addressForm.handleSubmit(handleAddAddress)}
+                      className="space-y-4"
+                    >
+                      {["street", "city", "state", "zipCode", "country"].map(
+                        (field) => (
+                          <div key={field} className="space-y-2">
+                            <Label htmlFor={field}>
+                              {field.charAt(0).toUpperCase() + field.slice(1)}
+                            </Label>
+                            <Input
+                              id={field}
+                              {...addressForm.register(
+                                field as keyof AddressFormData
+                              )}
+                            />
+                            {addressForm.formState.errors[
+                              field as keyof AddressFormData
+                            ]?.message && (
+                              <p className="text-sm text-red-500">
+                                {
+                                  addressForm.formState.errors[
+                                    field as keyof AddressFormData
+                                  ]?.message
+                                }
+                              </p>
+                            )}
+                          </div>
+                        )
+                      )}
                       <Button type="submit" disabled={isAddingAddress}>
                         {isAddingAddress ? "Adding..." : "Add Address"}
                       </Button>
@@ -280,7 +339,8 @@ function Profile() {
             <CardContent>
               <ScrollArea className="h-[300px]">
                 <div className="space-y-4">
-                  {Array.isArray(user?.addresses) && user.addresses.length > 0 ? (
+                  {Array.isArray(user?.addresses) &&
+                  user.addresses.length > 0 ? (
                     user.addresses.map((address: any, index: number) => (
                       <div
                         key={address._id || index}
@@ -293,22 +353,42 @@ function Profile() {
                             )}
                             className="space-y-4 w-full"
                           >
-                            {["street", "city", "state", "zipCode", "country"].map((field) => (
+                            {[
+                              "street",
+                              "city",
+                              "state",
+                              "zipCode",
+                              "country",
+                            ].map((field) => (
                               <div key={field} className="space-y-2">
-                                <Label htmlFor={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
+                                <Label htmlFor={field}>
+                                  {field.charAt(0).toUpperCase() +
+                                    field.slice(1)}
+                                </Label>
                                 <Input
                                   id={field}
-                                  {...addressForm.register(field as keyof AddressFormData)}
+                                  {...addressForm.register(
+                                    field as keyof AddressFormData
+                                  )}
                                 />
-                                {addressForm.formState.errors[field as keyof AddressFormData]?.message && (
+                                {addressForm.formState.errors[
+                                  field as keyof AddressFormData
+                                ]?.message && (
                                   <p className="text-sm text-red-500">
-                                    {addressForm.formState.errors[field as keyof AddressFormData]?.message}
+                                    {
+                                      addressForm.formState.errors[
+                                        field as keyof AddressFormData
+                                      ]?.message
+                                    }
                                   </p>
                                 )}
                               </div>
                             ))}
                             <div className="flex gap-2">
-                              <Button type="submit" disabled={isUpdatingAddress}>
+                              <Button
+                                type="submit"
+                                disabled={isUpdatingAddress}
+                              >
                                 {isUpdatingAddress ? "Updating..." : "Save"}
                               </Button>
                               <Button
@@ -322,9 +402,13 @@ function Profile() {
                         ) : (
                           <>
                             <div>
-                              <p className="font-medium">Address #{index + 1}</p>
+                              <p className="font-medium">
+                                Address #{index + 1}
+                              </p>
                               <p className="text-sm text-muted-foreground">
-                                {address.street}, {address.city}, {address.state}, {address.zipCode}, {address.country}
+                                {address.street}, {address.city},{" "}
+                                {address.state}, {address.zipCode},{" "}
+                                {address.country}
                               </p>
                             </div>
                             <div className="flex gap-2">
@@ -348,7 +432,9 @@ function Profile() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-muted-foreground">No addresses saved yet.</p>
+                    <p className="text-center text-muted-foreground">
+                      No addresses saved yet.
+                    </p>
                   )}
                 </div>
               </ScrollArea>
