@@ -14,7 +14,7 @@ const AdminRegister = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [createAdmin, { isLoading, error: isError }] = useCreateAdminMutation();
+  const [createAdmin, { isLoading, isError }] = useCreateAdminMutation();
   const router = useRouter();
 
   if (status === "authenticated" && session?.user?.role === "admin") {
@@ -96,11 +96,11 @@ const AdminRegister = () => {
             {isLoading ? "Registering..." : "Register Admin"}
           </Button>
         </form>
-        {isError && (
+        {/* {isError && (
           <p className="mt-2 text-center text-sm text-red-600">
-            {isError.toString()}
+            {isError?.error.toString()}
           </p>
-        )}
+        )} */}
         <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
           Already have an admin account?{" "}
           <a

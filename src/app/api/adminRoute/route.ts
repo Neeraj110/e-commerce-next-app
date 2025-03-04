@@ -20,7 +20,14 @@ const validateAdminAccess = async (
 export async function POST(request: NextRequest) {
   try {
     const existingAdmin = await User.findOne({ role: "admin" });
-    const validation = await validateAdminAccess(request, !!existingAdmin);
+    if (existingAdmin) {
+      return NextResponse.json(
+        { message: "An admin  already exists" },
+        { status: 400 }
+      );
+    }
+
+    const validation = await validateAdminAccess(request, false);
     if (validation) return validation;
 
     const { name, email, password } = await request.json();
@@ -33,33 +40,14 @@ export async function POST(request: NextRequest) {
     }
 
     const existingUser = await User.findOne({ email });
-
     if (existingUser) {
-      const isPasswordMatch = await existingUser.comparePassword(password);
-      if (!isPasswordMatch) {
-        return NextResponse.json(
-          { message: "Invalid credentials" },
-          { status: 401 }
-        );
-      }
-
-      if (existingUser.role === "admin") {
-        return NextResponse.json(
-          { message: "Admin user already exists" },
-          { status: 400 }
-        );
-      }
-
-      existingUser.role = "admin";
-      await existingUser.save();
-
       return NextResponse.json(
-        { message: "Admin user updated successfully", user: existingUser },
-        { status: 200 }
+        { message: "Email already in use by another user" },
+        { status: 400 }
       );
     }
 
-    const newUser = await User.create({
+    const newAdmin = await User.create({
       name,
       email,
       password,
@@ -67,11 +55,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: "Admin user created successfully", user: newUser },
+      { message: "Admin user created successfully", user: newAdmin },
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Error creating/updating admin:", error);
+    console.error("Error creating admin:", error);
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
