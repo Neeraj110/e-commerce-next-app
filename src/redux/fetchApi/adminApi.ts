@@ -3,22 +3,22 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const adminApi = createApi({
   reducerPath: "adminApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api/admin/",
+    baseUrl: "/api/adminRoute/",
     credentials: "include",
   }),
   tagTypes: ["Admin"],
   endpoints: (builder) => ({
     updateAdmin: builder.mutation({
-      query: ({ data, id }) => ({
-        url: `${id}`,
+      query: ({ data }) => ({
+        url: ``,
         method: "PATCH",
         body: data,
       }),
       invalidatesTags: ["Admin"],
     }),
     deleteAdmin: builder.mutation({
-      query: ({ id }) => ({
-        url: `${id}`,
+      query: () => ({
+        url: ``,
         method: "DELETE",
       }),
       invalidatesTags: ["Admin"],
@@ -32,7 +32,7 @@ export const adminApi = createApi({
       invalidatesTags: ["Admin"],
     }),
     getAdmin: builder.query({
-      query: (id: string) => `${id}`,
+      query: () => ``,
       providesTags: ["Admin"],
     }),
   }),
@@ -44,5 +44,3 @@ export const {
   useUpdateAdminMutation,
   useGetAdminQuery,
 } = adminApi;
-
-export default adminApi;

@@ -6,9 +6,10 @@ import { cartApi } from "../fetchApi/cartApi";
 import { userApi } from "../fetchApi/userApi";
 import { orderApi } from "../fetchApi/orderApi";
 import { paymentApi } from "../fetchApi/paymentApi";
+import { adminApi } from "../fetchApi/adminApi";
 
+const isBrowser = typeof window !== "undefined";
 const SESSION_KEY = "userState";
-const isBrowser = typeof window !== 'undefined';
 
 const appReducer = combineReducers({
   user: userSlice,
@@ -18,6 +19,7 @@ const appReducer = combineReducers({
   [userApi.reducerPath]: userApi.reducer,
   [orderApi.reducerPath]: orderApi.reducer,
   [paymentApi.reducerPath]: paymentApi.reducer,
+  [adminApi.reducerPath]: adminApi.reducer,
 });
 
 export const rootReducer = (state: any, action: any) => {
@@ -38,7 +40,8 @@ const store = configureStore({
       cartApi.middleware,
       userApi.middleware,
       orderApi.middleware,
-      paymentApi.middleware
+      paymentApi.middleware,
+      adminApi.middleware
     ),
 });
 

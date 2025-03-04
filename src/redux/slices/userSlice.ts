@@ -26,12 +26,12 @@ interface UserState {
 }
 
 const SESSION_KEY = "userState";
-const isBrowser = typeof window !== 'undefined';
+const isBrowser = typeof window !== "undefined";
 
 // Utility functions
 const saveStateToSession = (state: UserState) => {
   if (!isBrowser) return;
-  
+
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
   } catch (err) {
@@ -46,9 +46,9 @@ const loadStateFromSession = (): UserState => {
     loading: false,
     error: null,
   };
-  
+
   if (!isBrowser) return defaultState;
-  
+
   try {
     const serializedState = sessionStorage.getItem(SESSION_KEY);
     if (!serializedState) {

@@ -42,12 +42,13 @@ interface CartItem {
 }
 
 export default function Cart() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const {
     data,
     isLoading: isCartLoading,
     isError: isCartError,
-  } = useGetCartQuery({});
+    error,
+  } = useGetCartQuery({}, { skip: !session });
   const [updateCart, { isLoading: isUpdating }] = useUpdateCartMutation();
   const [deleteCart, { isLoading: isDeleting }] = useDeleteCartMutation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -56,7 +57,7 @@ export default function Cart() {
   const router = useRouter();
 
   useEffect(() => {
-    if (data && !isCartLoading && !isCartError) {
+    if (session && data && !isCartLoading && !isCartError) {
       const serverCartItems: CartItem[] = data.cart.items.map((item: any) => ({
         _id: item._id,
         product: {
@@ -69,13 +70,19 @@ export default function Cart() {
         quantity: item.quantity,
       }));
 
-      // Sync Redux state with server data only if different
-      if (JSON.stringify(cart.items) !== JSON.stringify(serverCartItems)) {
+  
+      const serverItemsString = JSON.stringify(serverCartItems);
+      const localItemsString = JSON.stringify(cart.items);
+      if (serverItemsString !== localItemsString) {
         dispatch(clearCart());
         serverCartItems.forEach((item: any) => dispatch(addToCart(item)));
       }
     }
-  }, [data, isCartLoading, isCartError, dispatch, cart.items]);
+
+    if (!session && cart.items.length > 0) {
+      dispatch(clearCart());
+    }
+  }, [data, isCartLoading, isCartError, dispatch, session]); 
 
   const handleQuantityChange = useCallback(
     async (item: CartItem, newQuantity: number) => {
@@ -123,8 +130,17 @@ export default function Cart() {
 
   const handleCheckOut = useCallback(() => {
     setIsSheetOpen(false);
-    router.push(session ? "/checkout" : "/login");
-  }, [session, router]);
+    router.push("/checkout");
+  }, [router]);
+
+  const handleLogin = useCallback(() => {
+    setIsSheetOpen(false);
+    router.push("/login");
+  }, [router]);
+
+  if (status === "loading") {
+    return null;
+  }
 
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -149,109 +165,121 @@ export default function Cart() {
           <SheetTitle>Cart ({cart.totalItems})</SheetTitle>
         </SheetHeader>
 
-        {isCartLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <p>Loading cart...</p>
-          </div>
-        ) : isCartError ? (
-          <div className="flex h-full items-center justify-center text-red-600">
-            <p>Error loading cart (Refresh)</p>
-          </div>
-        ) : (
-          <div className="flex flex-1 flex-col gap-4 overflow-auto">
-            {cart.items.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-2">
-                <ShoppingBag className="h-8 w-8 text-muted-foreground" />
-                <p className="text-lg font-medium">Your cart is empty</p>
-              </div>
-            ) : (
-              cart.items.map((item: CartItem) => (
-                <div
-                  key={item.product._id}
-                  className="flex gap-4 py-4 border-b"
-                >
-                  <div className="relative aspect-square h-24 w-24 overflow-hidden rounded">
-                    <Image
-                      src={item.product.images?.[0]?.url || "/placeholder.svg"}
-                      alt={item.product.title}
-                      fill
-                      sizes="100%"
-                      loading="lazy"
-                      className="object-cover"
-                    />
-                  </div>
+        {session ? (
+          isCartLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <p>Loading cart...</p>
+            </div>
+          ) : isCartError ? (
+            <div className="flex h-full items-center justify-center text-red-600">
+              <p>Error loading cart (Refresh)</p>
+            </div>
+          ) : (
+            <div className="flex flex-1 flex-col gap-4 overflow-auto">
+              {cart.items.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center gap-2">
+                  <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-lg font-medium">Your cart is empty</p>
+                </div>
+              ) : (
+                cart.items.map((item: CartItem) => (
+                  <div
+                    key={item.product._id}
+                    className="flex gap-4 py-4 border-b"
+                  >
+                    <div className="relative aspect-square h-24 w-24 overflow-hidden rounded">
+                      <Image
+                        src={
+                          item.product.images?.[0]?.url || "/placeholder.svg"
+                        }
+                        alt={item.product.title}
+                        fill
+                        sizes="100%"
+                        loading="lazy"
+                        className="object-cover"
+                      />
+                    </div>
 
-                  <div className="flex flex-1 flex-col">
-                    <div className="flex justify-between gap-2">
-                      <p className="line-clamp-2 text-sm font-medium">
-                        {item.product.title}
+                    <div className="flex flex-1 flex-col">
+                      <div className="flex justify-between gap-2">
+                        <p className="line-clamp-2 text-sm font-medium">
+                          {item.product.title}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveItem(item)}
+                          disabled={isDeleting}
+                          aria-label={`Remove ${item.product.title} from cart`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <p className="mt-1 text-sm font-medium">
+                        ₹{item.product.price?.toFixed(2)}
                       </p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveItem(item)}
-                        disabled={isDeleting}
-                        aria-label={`Remove ${item.product.title} from cart`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
 
-                    <p className="mt-1 text-sm font-medium">
-                      ₹{item.product.price?.toFixed(2)}
-                    </p>
-
-                    <div className="mt-2 flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() =>
-                          handleQuantityChange(item, item.quantity - 1)
-                        }
-                        disabled={isUpdating || item.quantity <= 1}
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <p className="w-8 text-center">{item.quantity}</p>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() =>
-                          handleQuantityChange(item, item.quantity + 1)
-                        }
-                        disabled={
-                          isUpdating || item.quantity >= item.product.stock
-                        }
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() =>
+                            handleQuantityChange(item, item.quantity - 1)
+                          }
+                          disabled={isUpdating || item.quantity <= 1}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <p className="w-8 text-center">{item.quantity}</p>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() =>
+                            handleQuantityChange(item, item.quantity + 1)
+                          }
+                          disabled={
+                            isUpdating || item.quantity >= item.product.stock
+                          }
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
 
-            {cart.items.length > 0 && (
-              <div className="space-y-4 border-t pr-4 pt-4">
-                <div className="flex justify-between">
-                  <span className="font-medium">Total</span>
-                  <span className="font-medium">
-                    ₹{cart.totalAmount?.toFixed(2)}
-                  </span>
+              {cart.items.length > 0 && (
+                <div className="space-y-4 border-t pr-4 pt-4">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Total</span>
+                    <span className="font-medium">
+                      ₹{cart.totalAmount?.toFixed(2)}
+                    </span>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={handleCheckOut}
+                    disabled={isUpdating || isDeleting}
+                  >
+                    Checkout
+                  </Button>
                 </div>
-                <Button
-                  className="w-full"
-                  onClick={handleCheckOut}
-                  disabled={isUpdating || isDeleting}
-                >
-                  Checkout
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
+          )
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4">
+            <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+            <p className="text-lg font-medium">
+              Please login to view your cart
+            </p>
+            <Button onClick={handleLogin}>Login</Button>
           </div>
         )}
       </SheetContent>

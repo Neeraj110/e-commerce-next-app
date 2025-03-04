@@ -4,10 +4,16 @@ import { useState, useCallback } from "react";
 import {
   useGetUserQuery,
   useUpdateUserMutation,
+  useDeleteUserMutation,
   useDeleteAddressMutation,
   useUpdateAddressMutation,
   useAddAddressMutation,
 } from "@/redux/fetchApi/userApi";
+import {
+  useUpdateAdminMutation,
+  useDeleteAdminMutation,
+} from "@/redux/fetchApi/adminApi";
+import { signOut } from "next-auth/react"; // Import signOut
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -37,7 +43,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
 
-// Address schema for validation
 const addressSchema = z.object({
   street: z.string().min(1, "Street is required"),
   city: z.string().min(1, "City is required"),
@@ -49,10 +54,15 @@ const addressSchema = z.object({
 type AddressFormData = z.infer<typeof addressSchema>;
 
 function Profile() {
-  // All hooks declared at the top level
   const { data, isLoading, error } = useGetUserQuery({});
-  const [updateUser] = useUpdateUserMutation();
-  const [deleteAddress] = useDeleteAddressMutation();
+  const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation();
+  const [deleteUser, { isLoading: isDeletingUser }] = useDeleteUserMutation();
+  const [updateAdmin, { isLoading: isUpdatingAdmin }] =
+    useUpdateAdminMutation();
+  const [deleteAdmin, { isLoading: isDeletingAdmin }] =
+    useDeleteAdminMutation();
+  const [deleteAddress, { isLoading: isDeletingAddress }] =
+    useDeleteAddressMutation();
   const [updateAddress, { isLoading: isUpdatingAddress }] =
     useUpdateAddressMutation();
   const [addAddress, { isLoading: isAddingAddress }] = useAddAddressMutation();
@@ -75,7 +85,6 @@ function Profile() {
 
   const user = data?.user || {};
 
-  // Handlers with useCallback
   const handleEditProfileToggle = useCallback(() => {
     if (!isEditingProfile) {
       setUserData({ name: user.name || "", email: user.email || "" });
@@ -85,14 +94,35 @@ function Profile() {
 
   const handleUpdateProfile = useCallback(async () => {
     try {
-      await updateUser({ data: userData }).unwrap();
+      if (user.role === "admin") {
+        await updateAdmin({ data: userData }).unwrap();
+      } else {
+        await updateUser({ data: userData }).unwrap();
+      }
       toast.success("Profile updated successfully");
       setIsEditingProfile(false);
     } catch (error) {
       toast.error("Failed to update profile");
-      console.error("Failed to update user:", error);
+      console.error("Failed to update profile:", error);
     }
-  }, [updateUser, userData]);
+  }, [updateUser, updateAdmin, userData, user.role]);
+
+  const handleDeleteProfile = useCallback(async () => {
+    if (!confirm("Are you sure you want to delete this profile?")) return;
+    try {
+      const response =
+        user.role === "admin"
+          ? await deleteAdmin({}).unwrap()
+          : await deleteUser({}).unwrap();
+      toast.success("Profile deleted successfully");
+      console.log("Profile deleted successfully:", response);
+
+      await signOut({ callbackUrl: "/" });
+    } catch (error) {
+      toast.error("Failed to delete profile");
+      console.error("Failed to delete profile:", error);
+    }
+  }, [deleteUser, deleteAdmin, user.role]);
 
   const handleDeleteAddress = useCallback(
     async (addressId: string) => {
@@ -152,7 +182,6 @@ function Profile() {
     [addressForm]
   );
 
-  // Early returns after all hooks
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -258,14 +287,33 @@ function Profile() {
                 </div>
               )}
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex gap-2">
               {!isEditingProfile ? (
-                <Button onClick={handleEditProfileToggle}>
-                  <Pencil className="mr-2 h-4 w-4" /> Edit Profile
-                </Button>
+                <>
+                  <Button onClick={handleEditProfileToggle}>
+                    <Pencil className="mr-2 h-4 w-4" /> Edit Profile
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteProfile}
+                    disabled={isDeletingUser || isDeletingAdmin}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {isDeletingUser || isDeletingAdmin
+                      ? "Deleting..."
+                      : "Delete Profile"}
+                  </Button>
+                </>
               ) : (
                 <div className="space-x-2">
-                  <Button onClick={handleUpdateProfile}>Save Changes</Button>
+                  <Button
+                    onClick={handleUpdateProfile}
+                    disabled={isUpdatingUser || isUpdatingAdmin}
+                  >
+                    {isUpdatingUser || isUpdatingAdmin
+                      ? "Saving..."
+                      : "Save Changes"}
+                  </Button>
                   <Button variant="outline" onClick={handleEditProfileToggle}>
                     Cancel
                   </Button>
