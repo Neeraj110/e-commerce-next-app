@@ -38,11 +38,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check for Admin Privileges
     const adminCheck = await adminAuthMiddleware(req);
     if (adminCheck) return adminCheck;
 
-    // Extract Product ID from Params
     const { id } = await params;
     if (!isValidObjectId(id)) {
       return NextResponse.json(
@@ -51,19 +49,15 @@ export async function PATCH(
       );
     }
 
-    // Connect to Database
     await connectDb();
 
-    // Fetch Existing Product
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Parse FormData from Request
     const formData = await req.formData();
 
-    // Extract Fields from FormData
     const title = formData.get("title") as string | null;
     const price = formData.get("price")
       ? parseFloat(formData.get("price") as string)
@@ -73,11 +67,15 @@ export async function PATCH(
     const stock = formData.get("stock")
       ? parseInt(formData.get("stock") as string)
       : undefined;
-    const specifications = formData.getAll("specifications") as string[];
+    const specifications: Record<string, string> = {};
+    for (const [key, value] of formData.entries()) {
+      const match = key.match(/^specifications\[(.*?)\]$/);
+      if (match) {
+        specifications[match[1]] = value as string;
+      }
+    }
 
     const imageFiles: File[] = formData.getAll("images") as File[];
-
-    // Prepare Fields for Update
     const updateData: any = {};
 
     if (title) updateData.title = title;
@@ -85,14 +83,15 @@ export async function PATCH(
     if (description) updateData.description = description;
     if (categories.length > 0) updateData.categories = categories;
     if (stock !== undefined) updateData.stock = stock;
-    if (specifications.length > 0) updateData.specifications = specifications;
+    if (Object.keys(specifications).length > 0) {
+      updateData.specifications = specifications;
+    }
 
     if (imageFiles.length > 0) {
       for (const image of product.images) {
         await deleteFromCloudinary(image.public_id);
       }
 
-      // Upload New Images to Cloudinary
       const uploadedImages = await Promise.all(
         imageFiles.map(async (image) => {
           const result = await uploadOnCloudinary(image);
@@ -103,7 +102,6 @@ export async function PATCH(
       updateData.images = uploadedImages;
     }
 
-    // Update Product in Database
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       { ...updateData, updatedAt: new Date() },

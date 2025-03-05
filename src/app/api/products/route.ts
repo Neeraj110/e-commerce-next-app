@@ -61,35 +61,31 @@ export async function POST(req: NextRequest) {
     const adminCheck = await adminAuthMiddleware(req);
     if (adminCheck) return adminCheck;
 
-    // Get FormData from request
     const formData = await req.formData();
 
-    // Extracting fields from FormData
     const title = formData.get("title") as string;
     const price = parseFloat(formData.get("price") as string);
     const description = formData.get("description") as string;
     const categories = formData.getAll("categories") as string[];
     const stock = parseInt(formData.get("stock") as string);
-    const specificationsString = formData.get("specifications") as string;
-    const specifications = JSON.parse(specificationsString);
+    
+    const specifications: Record<string, string> = {};
+    for (const [key, value] of formData.entries()) {
+      const match = key.match(/^specifications\[(.*?)\]$/);
+      if (match) {
+        specifications[match[1]] = value as string;
+      }
+    }
+
     const imageFiles: File[] = formData.getAll("images") as File[];
 
-    if (
-      !title ||
-      !price ||
-      !description ||
-      !categories ||
-      !stock ||
-      !specifications ||
-      !imageFiles
-    ) {
+    if (!title || !price || !description || !categories || !stock || !imageFiles) {
       return NextResponse.json(
         { error: "Please fill all the fields" },
         { status: 400 }
       );
     }
 
-    // Connect to Database
     await connectDb();
 
     // Upload images to Cloudinary
@@ -99,8 +95,6 @@ export async function POST(req: NextRequest) {
         return { url: result.url, public_id: result.public_id };
       })
     );
-
-    // console.log("uploadedImages", uploadedImages);
 
     if (!uploadedImages || uploadedImages.length === 0) {
       return NextResponse.json(
@@ -128,3 +122,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

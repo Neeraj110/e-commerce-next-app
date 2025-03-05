@@ -47,7 +47,6 @@ export default function Cart() {
     data,
     isLoading: isCartLoading,
     isError: isCartError,
-    error,
   } = useGetCartQuery({}, { skip: !session });
   const [updateCart, { isLoading: isUpdating }] = useUpdateCartMutation();
   const [deleteCart, { isLoading: isDeleting }] = useDeleteCartMutation();
@@ -70,7 +69,6 @@ export default function Cart() {
         quantity: item.quantity,
       }));
 
-  
       const serverItemsString = JSON.stringify(serverCartItems);
       const localItemsString = JSON.stringify(cart.items);
       if (serverItemsString !== localItemsString) {
@@ -82,7 +80,7 @@ export default function Cart() {
     if (!session && cart.items.length > 0) {
       dispatch(clearCart());
     }
-  }, [data, isCartLoading, isCartError, dispatch, session]); 
+  }, [data, isCartLoading, isCartError, dispatch, session]);
 
   const handleQuantityChange = useCallback(
     async (item: CartItem, newQuantity: number) => {
@@ -172,7 +170,9 @@ export default function Cart() {
             </div>
           ) : isCartError ? (
             <div className="flex h-full items-center justify-center text-red-600">
-              <p>Error loading cart (Refresh)</p>
+              {Array.isArray(cart?.items) && cart?.items.length > 0
+                ? "Failed to load cart"
+                : "No items in cart"}
             </div>
           ) : (
             <div className="flex flex-1 flex-col gap-4 overflow-auto">

@@ -2,17 +2,22 @@
 
 import { useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useGetSingleProductQuery } from "@/redux/fetchApi/productApi";
+import {
+  useDeleteProductMutation,
+  useGetSingleProductQuery,
+} from "@/redux/fetchApi/productApi";
 import { ProductImages } from "@/components/ProductImages";
 import { ProductDetails } from "@/components/ProductDetails";
 import { ProductFeatures } from "@/components/ProductFeatures";
 import { ProductActions } from "@/components/ProductActions";
 import { ProductReviews } from "@/components/ProductReviews";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
 
 interface Product {
+  specifications: Record<string, string>;
   _id: string;
   title: string;
   price: number;
@@ -24,12 +29,31 @@ interface Product {
 }
 
 export default function ProductPage() {
-  const { data: session } = useSession();
+  const { currentUser } = useSelector((state: RootState) => state.user);
+  const isAdmin = currentUser?.role === "admin";
   const { id } = useParams();
   const router = useRouter();
   const { data, isLoading, isError } = useGetSingleProductQuery(id as string);
+  const [deleteProduct, { isLoading: isDeletingAdmin }] =
+    useDeleteProductMutation();
 
   const product = data?.product as Product | null;
+
+  const handleEditRedirect = useCallback(() => {
+    router.push(`/admin/product/${id}`);
+  }, [id, router]);
+
+  const handleDelete = useCallback(async () => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteProduct({ id }).unwrap();
+        router.push("/product");
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Failed to delete product");
+      }
+    }
+  }, [id, router]);
 
   if (isLoading) {
     return (
@@ -51,7 +75,7 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 mt-16 sm:mt-20">
-      <header className="flex h-12 sm:h-16 items-center px-3 sm:px-4 md:px-6 lg:px-8 border-b dark:border-gray-800">
+      <header className="flex h-12 sm:h-16 items-center px-3 sm:px-4 md:px-6 lg:px-8 border-b dark:border-gray-800 justify-between">
         <Button
           variant="ghost"
           onClick={() => router.back()}
@@ -63,6 +87,26 @@ export default function ProductPage() {
             Back
           </span>
         </Button>
+
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleEditRedirect}
+              className="text-sm sm:text-base"
+            >
+              Edit Product
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              className="flex items-center gap-1 sm:gap-2"
+            >
+              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-sm sm:text-base">Delete</span>
+            </Button>
+          </div>
+        )}
       </header>
 
       <main className="px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10">
@@ -72,6 +116,21 @@ export default function ProductPage() {
             <ProductDetails product={product} />
             <ProductFeatures />
             <ProductActions productId={product._id} stock={product.stock} />
+            {product.specifications && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">Specifications</h2>
+                <ul className="list-disc pl-5 space-y-2">
+                  {Object.entries(product.specifications).map(
+                    ([key, value]) => (
+                      <li key={key}>
+                        <span className="font-medium">{key}: </span>
+                        {value}
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
         <ProductReviews rating={product.rating} productId={product._id} />

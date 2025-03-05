@@ -87,7 +87,7 @@ export async function POST(
     });
     if (existingReview) {
       return NextResponse.json(
-        { error: "Review already exists" },
+        { error: "One user can only write one review" },
         { status: 400 }
       );
     }
