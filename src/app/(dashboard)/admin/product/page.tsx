@@ -52,7 +52,6 @@ function AddProduct() {
     formPayload.append("description", formData.description);
     formPayload.append("stock", formData.stock);
 
-    
     const categories = formData.categories
       ? formData.categories.split(",").map((cat) => cat.trim())
       : [];

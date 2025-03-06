@@ -42,6 +42,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const addressSchema = z.object({
   street: z.string().min(1, "Street is required"),
@@ -54,6 +55,7 @@ const addressSchema = z.object({
 type AddressFormData = z.infer<typeof addressSchema>;
 
 function Profile() {
+  const router = useRouter();
   const { data, isLoading, error } = useGetUserQuery({});
   const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation();
   const [deleteUser, { isLoading: isDeletingUser }] = useDeleteUserMutation();
@@ -200,6 +202,16 @@ function Profile() {
 
   return (
     <div className="container mx-auto p-4 max-w-4xl">
+      {user.role === "admin" && (
+        <Button
+          onClick={() => {
+            router.push("/admin/dashboard");
+          }}
+          className="my-5"
+        >
+          Go to Admin Dashboard
+        </Button>
+      )}
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile">Profile</TabsTrigger>

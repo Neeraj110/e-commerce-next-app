@@ -1,6 +1,9 @@
 "use client";
 
-import { useGetOrdersQuery, useDeleteOrderMutation } from "@/redux/fetchApi/orderApi";
+import {
+  useGetOrdersQuery,
+  useDeleteOrderMutation,
+} from "@/redux/fetchApi/orderApi";
 import React from "react";
 import {
   Card,
@@ -137,13 +140,16 @@ function Orders() {
             </Table>
 
             {/* Refund Message for Razorpay Orders */}
-            {orders.some((order: any) => order.paymentMethod === "razorpay") && (
+            {orders.some(
+              (order: any) => order.paymentMethod === "razorpay"
+            ) && (
               <Alert className="mt-6">
                 <AlertTitle>Refund Policy</AlertTitle>
                 <AlertDescription>
-                  For orders paid via Razorpay, or any online payments refunds will be processed within
-                  4-5 business days. For any issues, please contact our helpline
-                  at <span className="font-semibold">+91-9192-456-7890</span>.
+                  For orders paid via Razorpay, or any online payments refunds
+                  will be processed within 4-5 business days. For any issues,
+                  please contact our helpline at{" "}
+                  <span className="font-semibold">+91-9192-456-7890</span>.
                 </AlertDescription>
               </Alert>
             )}

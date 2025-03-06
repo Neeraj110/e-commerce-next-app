@@ -4,7 +4,6 @@ import Product from "@/models/product.model";
 import connectDb from "@/config/connectDb";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
-import mongoose from "mongoose";
 import User from "@/models/user.model";
 
 // src/app/api/orders/[id]/route.ts

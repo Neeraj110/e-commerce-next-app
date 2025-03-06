@@ -6,7 +6,12 @@ import { Label } from "@/components/ui/label";
 interface ShippingMethodProps {
   shippingMethod: string;
   onShippingMethodChange: (method: string) => void;
-  shippingMethods: { id: string; name: string; description: string; price: number }[];
+  shippingMethods: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+  }[];
 }
 
 export function ShippingMethod({
@@ -35,7 +40,9 @@ export function ShippingMethod({
                 <RadioGroupItem value={method.id} id={method.id} />
                 <div>
                   <div className="font-medium">{method.name}</div>
-                  <div className="text-sm text-muted-foreground">{method.description}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {method.description}
+                  </div>
                 </div>
               </div>
               <div className="font-medium">

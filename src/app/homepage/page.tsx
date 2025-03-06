@@ -8,7 +8,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
-
 export default function HomePage() {
   const { data, isLoading, isError } = useGetProductsQuery({
     page: 1,
@@ -64,7 +63,7 @@ export default function HomePage() {
                           p.categories.includes(category)
                         )?.images[0]?.url || "/placeholder.jpg"
                       }
-                      alt={category}  
+                      alt={category}
                       className="object-cover transition-transform group-hover:scale-105"
                       fill
                       sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"

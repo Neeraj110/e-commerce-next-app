@@ -24,6 +24,7 @@ export interface IOrder extends Document {
   razorpay_signature?: string;
   codVerified?: boolean;
   paidAt?: Date;
+  createdAt: Date;
 }
 
 const OrderSchema = new Schema(

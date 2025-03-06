@@ -55,8 +55,6 @@ export default function CheckoutPage() {
   const [useExistingAddress, setUseExistingAddress] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
 
-
-  
   const [addressData, setAddressData] = useState<Omit<Address, "_id">>({
     street: "",
     city: "",
@@ -197,9 +195,9 @@ export default function CheckoutPage() {
               order_id: orderData._id,
             }).unwrap();
 
+            router.push(`/orders/confirmation?id=${orderData._id}`);
             dispatch(clearCart());
             await removeCart({});
-            router.push(`/orders/confirmation?id=${orderData._id}`);
           } catch (error: any) {
             setError(error.message || "Payment verification failed");
             setIsLoading(false);
@@ -251,9 +249,9 @@ export default function CheckoutPage() {
         return;
       }
 
+      router.push(`/orders/confirmation?id=${result.order._id}`);
       dispatch(clearCart());
       await removeCart({});
-      router.push(`/orders/confirmation?id=${result.order._id}`);
     } catch (error: any) {
       setError(error.message || "Failed to place order");
     } finally {

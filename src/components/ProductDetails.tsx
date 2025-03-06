@@ -64,7 +64,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
       </div>
       <Separator className="my-4" />
       <div className="space-y-2 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg">
-        <h3 className="text-lg sm:text-xl font-semibold">Product Description</h3>
+        <h3 className="text-lg sm:text-xl font-semibold">
+          Product Description
+        </h3>
         <p className="leading-relaxed text-sm sm:text-base text-gray-600 dark:text-gray-300 whitespace-pre-line">
           {description}
         </p>

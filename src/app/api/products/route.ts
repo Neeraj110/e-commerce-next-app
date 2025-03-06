@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import Product from "@/models/product.model";
 import connectDb from "@/config/connectDb";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
-import { uploadOnCloudinary } from "@/config/cloudinary";
+import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,7 +22,6 @@ export async function GET(req: NextRequest) {
     }
 
     if (price && price !== "null") {
-      // Parse the price range (e.g., "0,80000" -> [0, 80000])
       const [min, max] = price.split(",").map((p) => parseInt(p, 10));
       query.price = { $gte: min, $lte: max };
     }
@@ -50,11 +49,21 @@ export async function GET(req: NextRequest) {
       totalPromise,
     ]);
 
+    for (const product of products) {
+      if (product.stock === 0 && product.images.length > 0) {
+        product.images.map(async (image: any) => {
+          await deleteFromCloudinary(image.public_id);
+        });
+        await Product.findByIdAndDelete(product._id);
+      }
+    }
+
     return NextResponse.json({ products, total });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 export async function POST(req: NextRequest) {
   try {
     // Admin Check
@@ -68,7 +77,7 @@ export async function POST(req: NextRequest) {
     const description = formData.get("description") as string;
     const categories = formData.getAll("categories") as string[];
     const stock = parseInt(formData.get("stock") as string);
-    
+
     const specifications: Record<string, string> = {};
     for (const [key, value] of formData.entries()) {
       const match = key.match(/^specifications\[(.*?)\]$/);
@@ -79,7 +88,14 @@ export async function POST(req: NextRequest) {
 
     const imageFiles: File[] = formData.getAll("images") as File[];
 
-    if (!title || !price || !description || !categories || !stock || !imageFiles) {
+    if (
+      !title ||
+      !price ||
+      !description ||
+      !categories ||
+      !stock ||
+      !imageFiles
+    ) {
       return NextResponse.json(
         { error: "Please fill all the fields" },
         { status: 400 }
@@ -122,4 +138,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

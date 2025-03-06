@@ -28,7 +28,7 @@ export default function ProductCard({
         {/* Responsive container with different aspect ratios for different screen sizes */}
         <div className="relative pt-[80%] sm:pt-[90%] md:pt-[100%]">
           <Image
-            src={product.images[0]?.url } 
+            src={product.images[0]?.url}
             alt={product.title}
             className="object-contain p-2 absolute inset-0 w-full h-full transition-transform group-hover:scale-105"
             fill

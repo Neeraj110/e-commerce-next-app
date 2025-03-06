@@ -17,6 +17,7 @@ const publicRoutes = [
 
 // Define admin-only routes
 const adminRoutes = [
+  "/admin",
   "/admin-dashboard",
   "/api/admin",
 ];

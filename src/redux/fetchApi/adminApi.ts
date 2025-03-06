@@ -31,8 +31,15 @@ export const adminApi = createApi({
       }),
       invalidatesTags: ["Admin"],
     }),
-    getAdmin: builder.query({
-      query: () => ``,
+    showStats: builder.query({
+      query: ({ page, limit }) => ({
+        url: "stats",
+        params: { page, limit },
+      }),
+      providesTags: ["Admin"],
+    }),
+    getOrder: builder.query({
+      query: (id) => `order/${id}`,
       providesTags: ["Admin"],
     }),
   }),
@@ -42,5 +49,6 @@ export const {
   useCreateAdminMutation,
   useDeleteAdminMutation,
   useUpdateAdminMutation,
-  useGetAdminQuery,
+  useGetOrderQuery,
+  useShowStatsQuery,
 } = adminApi;
