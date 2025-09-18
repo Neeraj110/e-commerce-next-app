@@ -23,9 +23,6 @@ export default function HomePage() {
   ];
 
 
-  console.log(categories.map((category) => (featuredProducts.find((p: any) =>
-    p.categories.includes(category)
-  )?.images[0]?.url)))
 
 
   return (
