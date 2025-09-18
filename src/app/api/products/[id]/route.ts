@@ -4,8 +4,8 @@ import connectDb from "@/config/connectDb";
 import { isValidObjectId } from "mongoose";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
 import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
+import { setCache, getCache, invalidateCache } from "@/lib/cache";
 
-// get a single product
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,10 +21,18 @@ export async function GET(
       );
     }
 
+    const cacheKey = `cache_product_${id}`;
+    const cachedProduct = await getCache<{ product: any }>(cacheKey);
+    if (cachedProduct) {
+      console.log("⚡ Serving from Redis cache");
+      return NextResponse.json(cachedProduct, { status: 200 });
+    }
+
     const product = await Product.findById(id).lean();
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
+    await setCache(cacheKey, { product }, 3600);
 
     return NextResponse.json({ product }, { status: 200 });
   } catch (error: any) {
@@ -32,7 +40,6 @@ export async function GET(
   }
 }
 
-// update a product only for admin
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -50,13 +57,13 @@ export async function PATCH(
     }
 
     await connectDb();
-
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     const formData = await req.formData();
+    const updateData: any = {};
 
     const title = formData.get("title") as string | null;
     const price = formData.get("price")
@@ -67,16 +74,12 @@ export async function PATCH(
     const stock = formData.get("stock")
       ? parseInt(formData.get("stock") as string)
       : undefined;
+
     const specifications: Record<string, string> = {};
     for (const [key, value] of formData.entries()) {
       const match = key.match(/^specifications\[(.*?)\]$/);
-      if (match) {
-        specifications[match[1]] = value as string;
-      }
+      if (match) specifications[match[1]] = value as string;
     }
-
-    const imageFiles: File[] = formData.getAll("images") as File[];
-    const updateData: any = {};
 
     if (title) updateData.title = title;
     if (price !== undefined) updateData.price = price;
@@ -87,6 +90,7 @@ export async function PATCH(
       updateData.specifications = specifications;
     }
 
+    const imageFiles: File[] = formData.getAll("images") as File[];
     if (imageFiles.length > 0) {
       for (const image of product.images) {
         await deleteFromCloudinary(image.public_id);
@@ -108,6 +112,9 @@ export async function PATCH(
       { new: true }
     );
 
+    await invalidateCache(`cache_product_${id}`);
+    await invalidateCache("cache_api_products*");
+
     return NextResponse.json({ product: updatedProduct }, { status: 200 });
   } catch (error: any) {
     console.error("Product Update Error:", error.message);
@@ -115,7 +122,6 @@ export async function PATCH(
   }
 }
 
-// delete a product only for admin
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -133,7 +139,6 @@ export async function DELETE(
     }
 
     await connectDb();
-
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -144,6 +149,9 @@ export async function DELETE(
     }
 
     await Product.findByIdAndDelete(id);
+
+    await invalidateCache(`cache_product_${id}`);
+    await invalidateCache("cache_api_products*");
 
     return NextResponse.json(
       { message: "Product deleted successfully" },

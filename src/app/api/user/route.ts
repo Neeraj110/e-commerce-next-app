@@ -4,6 +4,7 @@ import connectDb from "@/config/connectDb";
 import { isValidObjectId } from "mongoose";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
+import { setCache, getCache, invalidateCache } from "@/lib/cache";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -37,6 +38,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const cacheKey = `user_${session.user.email}`;
+    await invalidateCache(cacheKey);
+
     return NextResponse.json({ updatedUser }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -65,6 +69,9 @@ export async function DELETE(request: NextRequest) {
 
     await User.findByIdAndDelete(user._id);
 
+    const cacheKey = `user_${session.user.email}`;
+    await invalidateCache(cacheKey);
+
     return NextResponse.json(
       { message: "User deleted successfully" },
       { status: 200 }
@@ -82,6 +89,12 @@ export async function GET(request: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const cacheKey = `user_${session.user.email}`;
+    const cachedUser = await getCache(cacheKey);
+    if (cachedUser) {
+      return NextResponse.json({ user: cachedUser }, { status: 200 });
     }
 
     const user = await User.findOne({ email: session.user.email })

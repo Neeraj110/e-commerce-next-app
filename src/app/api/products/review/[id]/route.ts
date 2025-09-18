@@ -6,6 +6,7 @@ import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
+import { setCache, getCache, invalidateCache } from "@/lib/cache";
 
 interface IImage {
   url: string;
@@ -29,6 +30,12 @@ export async function GET(
 
     const { id: productId } = await params;
 
+    const cacheKey = `product_reviews_${productId}`;
+    const cachedData = await getCache(cacheKey);
+    if (cachedData) {
+      return NextResponse.json(cachedData);
+    }
+
     const product = await Product.findById(productId);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -37,6 +44,8 @@ export async function GET(
     const reviews = await Review.find({ product: productId })
       .populate("user", "name email")
       .sort({ createdAt: -1 });
+
+    await setCache(cacheKey, reviews, 300);
 
     return NextResponse.json(reviews);
   } catch (error: any) {
@@ -116,13 +125,13 @@ export async function POST(
       rating: Number(avgRating.toFixed(1)),
     });
 
+    await invalidateCache(`product_reviews_${productId}`);
+
     return NextResponse.json(review, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-// Same promise-based params handling for PATCH and DELETE routes.
 
 export async function PATCH(
   req: NextRequest,
@@ -172,14 +181,14 @@ export async function PATCH(
       { new: true }
     ).populate("user", "name email");
 
+    const cacheKey = `product_reviews_${productId}`;
+    await invalidateCache(cacheKey);
+
     return NextResponse.json(updatedReview);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
-// DELETE route adjusted similarly!
-
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -202,6 +211,9 @@ export async function DELETE(
     }
 
     await Review.findByIdAndDelete(reviewId);
+
+    const cacheKey = `product_reviews_${productId}`;
+    await invalidateCache(cacheKey);
     return NextResponse.json({ message: "Review deleted successfully" });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -18,9 +18,15 @@ export default function HomePage() {
   const categories = [
     "men's clothing",
     "jewelery",
+    "rings",
     "electronics",
-    "women's clothing",
   ];
+
+
+  console.log(categories.map((category) => (featuredProducts.find((p: any) =>
+    p.categories.includes(category)
+  )?.images[0]?.url)))
+
 
   return (
     <div className="flex min-h-screen flex-col">

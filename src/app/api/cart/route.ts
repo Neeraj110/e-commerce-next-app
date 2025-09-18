@@ -6,6 +6,7 @@ import authOptions from "@/lib/authOption";
 import Product from "@/models/product.model";
 import { isValidObjectId } from "mongoose";
 import User from "@/models/user.model";
+import { setCache, getCache, invalidateCache } from "@/lib/cache";
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,6 +23,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
+    const cacheKey = `cart_${user._id}`;
+    const cachedCart = await getCache<any>(cacheKey);
+    if (cachedCart) {
+      return NextResponse.json(cachedCart);
+    }
+
     const cart = await Cart.findOne({ user: user._id }).populate(
       "items.product"
     );
@@ -29,6 +36,8 @@ export async function GET(req: NextRequest) {
     if (!cart) {
       return NextResponse.json({ message: "Cart not found" }, { status: 404 });
     }
+
+    await setCache(cacheKey, { cart, message: "fetch all cart successfully" });
 
     return NextResponse.json(
       { cart, message: "fetch all cart successfully" },
@@ -84,6 +93,9 @@ export async function POST(request: NextRequest) {
 
       await cart.save();
     }
+
+    const cacheKey = `cart_${user._id}`;
+    await invalidateCache(cacheKey);
 
     await cart.populate("items.product", "title price images stock");
     return NextResponse.json({
@@ -145,6 +157,10 @@ export async function PATCH(req: NextRequest) {
     }
 
     await cart.save();
+
+    const cacheKey = `cart_${user?._id}`;
+    await invalidateCache(cacheKey);
+
     return NextResponse.json(
       { cart, message: `Item quantity updated to ${quantity}` },
       { status: 201 }

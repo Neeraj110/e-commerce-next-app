@@ -3,10 +3,26 @@ import Product from "@/models/product.model";
 import connectDb from "@/config/connectDb";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
 import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
+import {
+  setCache,
+  getCache,
+  generateCacheKey,
+  invalidateCache,
+} from "@/lib/cache";
 
 export async function GET(req: NextRequest) {
   try {
     await connectDb();
+
+    const cacheKey = generateCacheKey(req);
+
+    const cachedData = await getCache<{ products: any[]; total: number }>(
+      cacheKey
+    );
+    if (cachedData) {
+      console.log("Serving from Redis Cache");
+      return NextResponse.json(cachedData);
+    }
 
     const searchParams = req.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -35,18 +51,14 @@ export async function GET(req: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const productsPromise = Product.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .select("-__v")
-      .lean();
-
-    const totalPromise = Product.countDocuments(query);
-
     const [products, total] = await Promise.all([
-      productsPromise,
-      totalPromise,
+      Product.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select("-__v")
+        .lean(),
+      Product.countDocuments(query),
     ]);
 
     for (const product of products) {
@@ -58,7 +70,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ products, total });
+    const responseData = { products, total };
+
+    await setCache(cacheKey, responseData, 360);
+
+    return NextResponse.json(responseData);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -66,7 +82,6 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Admin Check
     const adminCheck = await adminAuthMiddleware(req);
     if (adminCheck) return adminCheck;
 
@@ -104,7 +119,6 @@ export async function POST(req: NextRequest) {
 
     await connectDb();
 
-    // Upload images to Cloudinary
     const uploadedImages = await Promise.all(
       imageFiles.map(async (image) => {
         const result = await uploadOnCloudinary(image);
@@ -119,7 +133,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create Product Document
     const product = await Product.create({
       title,
       price,
@@ -132,6 +145,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date(),
     });
 
+    await invalidateCache("cache_api_products*");
     return NextResponse.json({ product }, { status: 201 });
   } catch (error: any) {
     console.error("Product Creation Error:", error.message);
