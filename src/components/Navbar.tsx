@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Session } from "next-auth";
-import { Search, User, Menu, X, ShoppingCart } from "lucide-react";
+import { Search, User, Menu, X, ShoppingCart, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +49,13 @@ const MobileMenu = ({
         <span className="text-sm font-medium">Theme</span>
         <ThemeToggle />
       </div>
+
+      {/* AI Chat Button - Mobile */}
+      <Button asChild variant="ghost" className="w-full justify-start">
+        <Link href="/chatbotpage" onClick={onClose}>
+          <MessageCircle className="h-5 w-5 mr-2" /> AI Chat
+        </Link>
+      </Button>
 
       {!session ? (
         <Button asChild variant="ghost" className="w-full justify-start">
@@ -109,9 +116,8 @@ const UserMenu = ({ session }: { session: Session }) => (
         ) : (
           <Avatar className="h-9 w-9">
             <AvatarImage
-              src={`https://api.dicebear.com/7.x/initials/svg?seed=${
-                session?.user?.name || "User"
-              }`}
+              src={`https://api.dicebear.com/7.x/initials/svg?seed=${session?.user?.name || "User"
+                }`}
             />
             <AvatarFallback>
               {session?.user?.name?.charAt(0) || "U"}
@@ -233,8 +239,23 @@ const Navbar = () => {
         </Button>
 
         {/* Icons & User Menu */}
-        <div className="flex items-center space-x-2 md:space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4 justify-between gap-5">
           <ThemeToggle />
+
+          {/* AI Chat Button - Desktop */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:flex"
+            asChild
+            aria-label="AI Chat"
+          >
+            <Link href="/chatbot">
+              AskToAI
+              <MessageCircle className="h-5 w-5" />
+            </Link>
+          </Button>
+
           <Cart />
           {session ? (
             <UserMenu session={session} />
