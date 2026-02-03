@@ -44,7 +44,7 @@ export default async function RootLayout({
           id="seo-optimizer"
           src="http://localhost:4444/sniffer.js"
           strategy="afterInteractive"
-          data-site-id="e5cf644b-2c79-4b90-be21-7ccd0aabf125"
+          data-site-id="f083db86-d17f-4235-a007-bd4609900339"
         />
       </head>
       <body
