@@ -35,16 +35,22 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <Script
-        id="razorpay-checkout-js"
-        src="https://checkout.razorpay.com/v1/checkout.js"
-        strategy="lazyOnload"
-      />
-      <Script
-        id="mysaas-seo-script"
-        src="https://cdn.mysaas.com/seo/site_1770008112022_33ppgddp2/latest.js"
-        strategy="afterInteractive"
-      />
+      <head>
+        {/* Razorpay */}
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="lazyOnload"
+        />
+
+        {/* SEO Optimizer Script (IMPORTANT) */}
+        <Script
+          id="seo-optimizer"
+          src="http://localhost:4444/sniffer.js"
+          strategy="afterInteractive"
+          data-site-id="91730e60-6d10-4b63-b956-cb5674a2bc02"
+        />
+      </head>
+
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
