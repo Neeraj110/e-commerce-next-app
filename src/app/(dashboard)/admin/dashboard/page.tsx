@@ -28,7 +28,6 @@ const AdminDashboard = () => {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const limit = 10;
-
   const { data, isLoading, isError } = useShowStatsQuery({ page, limit });
 
   if (isLoading) return <div className="p-6">Loading stats...</div>;
