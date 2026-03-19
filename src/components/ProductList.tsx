@@ -13,7 +13,7 @@ export default function ProductList({ products, isdes }: ProductListProps) {
       {products.map((product, index) => (
         <Link
           href={`/product/${product._id}`}
-          key={product._id as string | number}
+          key={String(product._id)}
         >
           <ProductCard product={product} index={index} isdes={isdes} />
         </Link>
