@@ -23,7 +23,7 @@ const adminRoutes = [
 ];
 
 export default withAuth(
-  function middleware(req: NextRequestWithAuth) {
+  function proxy(req: NextRequestWithAuth) {
     return NextResponse.next();
   },
   {
