@@ -83,7 +83,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
               <ul className="py-2">
                 {products.map((product) => (
                   <li
-                    key={product._id as string}
+                    key={String(product._id)}
                     className="px-4 py-2  hover:border-2 cursor-pointer flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onClick={() => handleProductClick(product)}
                     onKeyDown={(e) =>
