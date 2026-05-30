@@ -40,12 +40,6 @@ export default async function RootLayout({
           src="https://checkout.razorpay.com/v1/checkout.js"
           strategy="lazyOnload"
         />
-        <Script
-          id="seo-optimizer"
-          src="http://localhost:4444/sniffer.js"
-          strategy="afterInteractive"
-          data-site-id="c24183bd-ecfb-4198-ba54-be863bc2066f"
-        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
