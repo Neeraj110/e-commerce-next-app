@@ -1,22 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { Address as SharedAddress, UserData } from "@/types";
 
-interface Address {
-  _id: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  isDefault: boolean;
-}
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  addresses: Address[];
-}
+type Address = SharedAddress;
+type User = UserData;
 
 interface UserState {
   currentUser: User | null;

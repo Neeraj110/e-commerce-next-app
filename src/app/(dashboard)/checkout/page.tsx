@@ -160,9 +160,6 @@ export default function CheckoutPage() {
       const addressSuccess = await saveAddress();
       if (!addressSuccess) return;
 
-      const orderResult = await createPayment({ amount: total }).unwrap();
-      const { order_id, amount } = orderResult;
-
       const orderItems = cart.items.map((item: any) => ({
         product: item.product._id,
         quantity: item.quantity,
@@ -178,6 +175,9 @@ export default function CheckoutPage() {
           : addressData,
         paymentMethod: "razorpay",
       }).unwrap();
+
+      const orderResult = await createPayment({ orderId: orderData._id }).unwrap();
+      const { order_id, amount } = orderResult;
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,

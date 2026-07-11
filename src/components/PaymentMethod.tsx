@@ -2,11 +2,12 @@
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import type { PaymentMethodOption } from "@/types";
 
 interface PaymentMethodProps {
   paymentMethod: string;
   onPaymentMethodChange: (method: string) => void;
-  paymentMethods: { id: string; name: string; icon: any }[];
+  paymentMethods: PaymentMethodOption[];
 }
 
 export function PaymentMethod({

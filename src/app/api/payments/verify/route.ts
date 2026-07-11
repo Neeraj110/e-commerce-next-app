@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
 import connectDb from "@/config/connectDb";
+import Product from "@/models/product.model";
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,6 +65,33 @@ export async function POST(req: NextRequest) {
         { error: "Payment already processed" },
         { status: 400 }
       );
+    }
+
+    if (existingOrder.razorpay_order_id !== razorpay_order_id) {
+      return NextResponse.json(
+        { error: "Payment order does not match the pending order" },
+        { status: 400 }
+      );
+    }
+
+    for (const item of existingOrder.items) {
+      const updatedProduct = await Product.findOneAndUpdate(
+        {
+          _id: item.product,
+          stock: { $gte: item.quantity },
+        },
+        {
+          $inc: { stock: -item.quantity },
+        },
+        { new: true }
+      );
+
+      if (!updatedProduct) {
+        return NextResponse.json(
+          { error: "One or more items are out of stock" },
+          { status: 409 }
+        );
+      }
     }
 
     const trackingNumber = `TRK${Math.floor(Math.random() * 1000000)}`;

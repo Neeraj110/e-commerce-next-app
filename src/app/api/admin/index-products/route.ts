@@ -1,13 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDb from "@/config/connectDb";
 import Product from "@/models/product.model";
 import { generateEmbedding } from "@/utils/embeddings";
 import { initPinecone, getPineconeIndex } from "@/config/pinecone";
+import { adminAuthMiddleware } from "@/utils/adminAuth";
 
 const INDEX_NAME = "products";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const adminCheck = await adminAuthMiddleware(req);
+    if (adminCheck) return adminCheck;
+
     // Connect to the database
     await connectDb();
 

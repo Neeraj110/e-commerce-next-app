@@ -61,6 +61,7 @@ const authOptions: NextAuthOptions = {
             id: user._id.toString(),
             email: user.email,
             name: user.name,
+            role: user.role,
           };
         } catch (error) {
           throw new Error(
@@ -74,9 +75,15 @@ const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+        token.role = (user as { role?: "user" | "admin" }).role ?? "user";
       }
       if (account) {
         token.provider = account.provider;
+      }
+      if (token.email && !token.role) {
+        await connectDb();
+        const dbUser = await User.findOne({ email: token.email }).select("role");
+        token.role = dbUser?.role ?? "user";
       }
       return token;
     },
@@ -84,6 +91,7 @@ const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.role = (token.role as "user" | "admin") ?? "user";
       }
       return session;
     },
@@ -103,7 +111,6 @@ const authOptions: NextAuthOptions = {
           await User.create({
             email: user.email,
             name: user.name,
-            password: "1254",
           });
         }
 

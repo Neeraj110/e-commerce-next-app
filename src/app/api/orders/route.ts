@@ -34,10 +34,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const stockUpdates = [];
     let totalAmount = 0;
 
-    // Check stock availability and calculate total
+    // Calculate the total using server-side product data.
     for (const item of body.items) {
       const product = await Product.findById(item.product);
 
@@ -56,19 +55,8 @@ export async function POST(req: NextRequest) {
       }
 
       totalAmount += product.price * item.quantity;
-
-      stockUpdates.push({
-        updateOne: {
-          filter: { _id: product._id },
-          update: { $inc: { stock: -item.quantity } },
-        },
-      });
     }
 
-    // Update stock for all products
-    await Product.bulkWrite(stockUpdates);
-
-    // Create the order
     const order = await Order.create({
       ...body,
       user: user._id,

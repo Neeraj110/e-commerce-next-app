@@ -1,12 +1,13 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
+import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
 import connectDb from "@/config/connectDb";
 
 export async function adminAuthMiddleware(req: NextRequest) {
   try {
     await connectDb();
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
       return NextResponse.json(

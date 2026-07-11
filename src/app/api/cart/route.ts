@@ -156,6 +156,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    cart.items[itemIndex].quantity = quantity;
     await cart.save();
 
     const cacheKey = `cart_${user?._id}`;

@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import { isValidObjectId } from "mongoose";
 import User from "@/models/user.model";
+import { invalidateCache } from "@/lib/cache";
 
 export async function PATCH(
   req: NextRequest,
@@ -69,6 +70,7 @@ export async function PATCH(
     item.quantity = quantity;
     await cart.save();
     await cart.populate("items.product", "title price images stock");
+    await invalidateCache(`cart_${user._id}`);
 
     return NextResponse.json(
       {
@@ -131,6 +133,7 @@ export async function DELETE(
     }
 
     await cart.save();
+    await invalidateCache(`cart_${user._id}`);
 
     return NextResponse.json(
       {

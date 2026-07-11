@@ -19,18 +19,57 @@ const validateAdminAccess = async (
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
     const existingAdmin = await User.findOne({ role: "admin" });
     if (existingAdmin) {
+      const validation = await validateAdminAccess(request);
+      if (validation) return validation;
+
+      const { name, email, password } = await request.json();
+
+      if (!name || !email || !password) {
+        return NextResponse.json(
+          { message: "Please fill in all fields" },
+          { status: 400 }
+        );
+      }
+
+      const duplicateUser = await User.findOne({ email });
+      if (duplicateUser) {
+        return NextResponse.json(
+          { message: "Email already in use by another user" },
+          { status: 400 }
+        );
+      }
+
+      const newAdmin = await User.create({
+        name,
+        email,
+        password,
+        role: "admin",
+      });
+
       return NextResponse.json(
-        { message: "An admin  already exists" },
-        { status: 400 }
+        { message: "Admin user created successfully", user: newAdmin },
+        { status: 201 }
       );
     }
 
-    const validation = await validateAdminAccess(request, false);
-    if (validation) return validation;
-
     const { name, email, password } = await request.json();
+
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { message: "Login is required to bootstrap the first admin" },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.email !== email) {
+      return NextResponse.json(
+        { message: "First admin email must match the logged in user" },
+        { status: 400 }
+      );
+    }
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -40,19 +79,21 @@ export async function POST(request: NextRequest) {
     }
 
     const existingUser = await User.findOne({ email });
+    let newAdmin;
     if (existingUser) {
-      return NextResponse.json(
-        { message: "Email already in use by another user" },
-        { status: 400 }
-      );
+      existingUser.name = name;
+      existingUser.password = password;
+      existingUser.role = "admin";
+      await existingUser.save();
+      newAdmin = existingUser;
+    } else {
+      newAdmin = await User.create({
+        name,
+        email,
+        password,
+        role: "admin",
+      });
     }
-
-    const newAdmin = await User.create({
-      name,
-      email,
-      password,
-      role: "admin",
-    });
 
     return NextResponse.json(
       { message: "Admin user created successfully", user: newAdmin },

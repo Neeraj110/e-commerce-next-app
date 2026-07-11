@@ -1,17 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { CartItem as SharedCartItem } from "@/types";
 
-interface CartItem {
-  _id: string;
-  product: {
-    _id: string;
-    title: string;
-    price: number;
-    description: string;
-    images: { url: string; public_id: string }[];
-    stock: number;
-  };
-  quantity: number;
-}
+type CartItem = SharedCartItem;
 
 interface CartState {
   items: CartItem[];
@@ -115,4 +105,5 @@ export const {
   setLoading,
   setError,
 } = cartSlice.actions;
+export type { CartItem };
 export default cartSlice.reducer;

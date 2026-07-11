@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import Product from "@/models/product.model";
 import connectDb from "@/config/connectDb";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
-import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
+import { uploadOnCloudinary } from "@/config/cloudinary";
 import {
   setCache,
   getCache,
@@ -60,15 +60,6 @@ export async function GET(req: NextRequest) {
         .lean(),
       Product.countDocuments(query),
     ]);
-
-    for (const product of products) {
-      if (product.stock === 0 && product.images.length > 0) {
-        product.images.map(async (image: any) => {
-          await deleteFromCloudinary(image.public_id);
-        });
-        await Product.findByIdAndDelete(product._id);
-      }
-    }
 
     const responseData = { products, total };
 
