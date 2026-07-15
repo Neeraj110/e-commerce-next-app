@@ -1,5 +1,10 @@
 "use client";
-import HomePage from "./homepage/page";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const HomePage = dynamic(() => import("./homepage/page"), {
+  loading: () => <Skeleton className="h-[calc(100vh-144px)] w-full rounded-xl" />,
+});
 import { useSession } from "next-auth/react";
 import { useGetUserQuery } from "@/redux/fetchApi/userApi";
 import { useDispatch, useSelector } from "react-redux";

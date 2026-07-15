@@ -4,8 +4,15 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { getServerSession } from "next-auth";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const Navbar = dynamic(() => import("@/components/Navbar"), {
+  loading: () => <Skeleton className="h-16 w-full rounded-none" />,
+});
+const Footer = dynamic(() => import("@/components/Footer"), {
+  loading: () => <Skeleton className="h-40 w-full rounded-none" />,
+});
 import Script from "next/script";
 import authOptions from "@/lib/authOption";
 import SessionWrapper from "@/utils/SessionProvider";

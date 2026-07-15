@@ -1,5 +1,10 @@
 import Link from "next/link";
-import ProductCard from "./ProductCard";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ProductCard = dynamic(() => import("./ProductCard"), {
+  loading: () => <Skeleton className="h-72 w-full rounded-xl" />,
+});
 import { IProduct } from "@/models/product.model";
 
 interface ProductListProps {

@@ -3,7 +3,12 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import OrderItem from "@/components/OrderItem";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const OrderItem = dynamic(() => import("@/components/OrderItem"), {
+  loading: () => <Skeleton className="h-24 w-full rounded-md" />,
+});
 
 interface OrderSummaryProps {
   cart: any;

@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import EmtyCart from "@/components/EmtyCart";
+import dynamic from "next/dynamic";
+const EmtyCart = dynamic(() => import("@/components/EmtyCart"));
 import { SHIPPING_METHODS, PAYMENT_METHODS } from "@/lib/Constants";
 import { Address } from "@/types";
 import { clearCart } from "@/redux/slices/cartSlice";
@@ -22,11 +23,24 @@ import {
 import { useAddAddressMutation } from "@/redux/fetchApi/userApi";
 import { useCreateOrderMutation } from "@/redux/fetchApi/orderApi";
 import { useRemoveCartMutation } from "@/redux/fetchApi/cartApi";
-import { ContactInformation } from "@/components/ContactInformation";
-import { ShippingAddress } from "@/components/ShippingAddress";
-import { ShippingMethod } from "@/components/ShippingMethod";
-import { PaymentMethod } from "@/components/PaymentMethod";
-import { OrderSummary } from "@/components/OrderSummary";
+
+import { Skeleton } from "@/components/ui/skeleton";
+
+const ContactInformation = dynamic(() => import("@/components/ContactInformation").then((mod) => mod.ContactInformation), {
+  loading: () => <Skeleton className="h-40 w-full rounded-xl" />,
+});
+const ShippingAddress = dynamic(() => import("@/components/ShippingAddress").then((mod) => mod.ShippingAddress), {
+  loading: () => <Skeleton className="h-64 w-full rounded-xl" />,
+});
+const ShippingMethod = dynamic(() => import("@/components/ShippingMethod").then((mod) => mod.ShippingMethod), {
+  loading: () => <Skeleton className="h-32 w-full rounded-xl" />,
+});
+const PaymentMethod = dynamic(() => import("@/components/PaymentMethod").then((mod) => mod.PaymentMethod), {
+  loading: () => <Skeleton className="h-32 w-full rounded-xl" />,
+});
+const OrderSummary = dynamic(() => import("@/components/OrderSummary").then((mod) => mod.OrderSummary), {
+  loading: () => <Skeleton className="h-[400px] w-full rounded-xl" />,
+});
 
 export default function CheckoutPage() {
   const { currentUser } = useSelector((state: RootState) => state.user);
@@ -297,7 +311,7 @@ export default function CheckoutPage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           <Link
-            href="/products"
+            href="/product"
             className="flex items-center gap-2 text-sm font-medium"
           >
             <ArrowLeft className="h-4 w-4" />

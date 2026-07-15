@@ -1,11 +1,25 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useGetProductsQuery } from "@/redux/fetchApi/productApi";
-import ProductList from "@/components/ProductList";
-import PaginationComponent from "@/components/PaginationComponent";
+import dynamic from "next/dynamic";
+
+const ProductList = dynamic(() => import("@/components/ProductList"), {
+  loading: () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton key={i} className="h-64 w-full rounded-xl" />
+      ))}
+    </div>
+  ),
+});
+const PaginationComponent = dynamic(() => import("@/components/PaginationComponent"), {
+  loading: () => <Skeleton className="h-10 w-full max-w-sm mx-auto mt-8 rounded-md" />,
+});
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import SideBar from "@/components/SideBar";
+const SideBar = dynamic(() => import("@/components/SideBar"), {
+  loading: () => <Skeleton className="h-[calc(100vh-120px)] w-64 rounded-xl hidden lg:block" />,
+});
 import { Button } from "@/components/ui/button";
 import { debouncedSearchQuery } from "@/utils/debouceSearch";
 import {

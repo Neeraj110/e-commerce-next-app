@@ -16,12 +16,19 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import SearchBox from "./SearchBox";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const SearchBox = dynamic(() => import("./SearchBox"), {
+  loading: () => <Skeleton className="h-10 w-full max-w-sm rounded-full" />,
+});
 import { ThemeToggle } from "@/utils/theme-toggle";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
-const Cart = dynamic(() => import("./Cart"), { ssr: false });
+const Cart = dynamic(() => import("./Cart"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-10 w-10 rounded-full" />,
+});
 
 interface User {
   name?: string | null;

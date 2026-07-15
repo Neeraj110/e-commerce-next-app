@@ -1,7 +1,16 @@
 "use client";
 
 import { useGetProductsQuery } from "@/redux/fetchApi/productApi";
-import ProductList from "@/components/ProductList";
+import dynamic from "next/dynamic";
+const ProductList = dynamic(() => import("@/components/ProductList"), {
+  loading: () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton key={i} className="h-64 w-full rounded-xl" />
+      ))}
+    </div>
+  ),
+});
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
