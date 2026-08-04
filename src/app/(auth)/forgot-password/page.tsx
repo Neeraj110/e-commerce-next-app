@@ -2,6 +2,11 @@
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { toast } from "sonner";
+import Link from "next/link";
+import { ArrowLeft, KeyRound, Lock, Mail, ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 function ForgotPassword() {
   const [formData, setFormData] = useState({
@@ -29,85 +34,123 @@ function ForgotPassword() {
       const { data } = await axios.put("/api/auth/reset-password", formData);
       if (data.error) {
         setError(data.error);
+        toast.error(data.error);
+        return;
       }
+      toast.success("Password changed successfully");
       router.push("/login");
-    } catch (error: any) {
-      setError(
-        error.response?.data?.error ||
-        "An error occurred while resetting the password"
-      );
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.error ||
+          "An error occurred while resetting the password"
+        : "An error occurred while resetting the password";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-4">
+    <main className="min-h-[calc(100vh-9rem)] bg-muted/30 px-4 py-10 sm:px-6">
+      <div className="mx-auto grid w-full max-w-5xl overflow-hidden rounded-lg border bg-background shadow-sm md:grid-cols-[0.9fr_1.1fr]">
+        <section className="hidden bg-primary p-10 text-primary-foreground md:flex md:flex-col md:justify-between">
+          <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
+            <ShoppingBag className="h-5 w-5" />
+            EazyCart
+          </Link>
+          <div className="space-y-4">
+            <h1 className="text-3xl font-bold">Reset your password</h1>
+            <p className="text-sm leading-6 text-primary-foreground/80">
+              Choose a new password and return to your account.
+            </p>
+          </div>
+        </section>
 
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm">
-            Enter your email and a new password below.
-          </p>
-        </div>
+        <div className="p-6 sm:p-8 md:p-10">
+          <div className="mb-8 space-y-2">
+            <Link
+              href="/"
+              className="mb-6 flex items-center gap-2 text-lg font-semibold text-primary md:hidden"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              EazyCart
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to sign in
+            </Link>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Change password
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Enter your account email and set a new password.
+            </p>
+          </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-              {error}
-            </div>
-          )}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {error && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
                 Email address
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="h-11 pl-10"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
+
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
                 New Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="New Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  className="h-11 pl-10"
+                  placeholder="Enter a new password"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-11 w-full"
             >
-              {loading ? "Changing..." : "Change Password"}
-            </button>
-          </div>
-        </form>
+              <KeyRound className="h-4 w-4" />
+              {loading ? "Changing password..." : "Change password"}
+            </Button>
+          </form>
+        </div>
       </div>
-    </div>)
+    </main>
+  );
 }
 
 export default ForgotPassword;

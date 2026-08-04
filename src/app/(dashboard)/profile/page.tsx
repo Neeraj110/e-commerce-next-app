@@ -223,20 +223,21 @@ function Profile() {
             <CardHeader>
               <div className="flex items-center space-x-4">
                 {user?.image ? (
-                  <Image
-                    src={user.image}
-                    alt={user.name || "User"}
-                    className="rounded-full"
-                    width={32}
-                    height={32}
-                    priority
-                  />
+                  <span className="relative h-8 w-8 overflow-hidden rounded-full">
+                    <Image
+                      src={user.image}
+                      alt={user.name || "User"}
+                      className="object-cover"
+                      fill
+                      sizes="32px"
+                      priority
+                    />
+                  </span>
                 ) : (
                   <Avatar className="h-9 w-9">
                     <AvatarImage
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${
-                        user?.name || "User"
-                      }`}
+                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.name || "User"
+                        }`}
                     />
                     <AvatarFallback>
                       {user?.name?.charAt(0) || "U"}
@@ -377,14 +378,14 @@ function Profile() {
                             {addressForm.formState.errors[
                               field as keyof AddressFormData
                             ]?.message && (
-                              <p className="text-sm text-red-500">
-                                {
-                                  addressForm.formState.errors[
-                                    field as keyof AddressFormData
-                                  ]?.message
-                                }
-                              </p>
-                            )}
+                                <p className="text-sm text-red-500">
+                                  {
+                                    addressForm.formState.errors[
+                                      field as keyof AddressFormData
+                                    ]?.message
+                                  }
+                                </p>
+                              )}
                           </div>
                         )
                       )}
@@ -400,7 +401,7 @@ function Profile() {
               <ScrollArea className="h-[300px]">
                 <div className="space-y-4">
                   {Array.isArray(user?.addresses) &&
-                  user.addresses.length > 0 ? (
+                    user.addresses.length > 0 ? (
                     user.addresses.map((address: any, index: number) => (
                       <div
                         key={address._id || index}
@@ -434,14 +435,14 @@ function Profile() {
                                 {addressForm.formState.errors[
                                   field as keyof AddressFormData
                                 ]?.message && (
-                                  <p className="text-sm text-red-500">
-                                    {
-                                      addressForm.formState.errors[
-                                        field as keyof AddressFormData
-                                      ]?.message
-                                    }
-                                  </p>
-                                )}
+                                    <p className="text-sm text-red-500">
+                                      {
+                                        addressForm.formState.errors[
+                                          field as keyof AddressFormData
+                                        ]?.message
+                                      }
+                                    </p>
+                                  )}
                               </div>
                             ))}
                             <div className="flex gap-2">

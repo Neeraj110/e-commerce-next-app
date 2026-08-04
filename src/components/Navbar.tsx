@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Session } from "next-auth";
-import { Search, User, Menu, X, ShoppingCart, MessageCircle } from "lucide-react";
+import { Search, User, Menu, X, MessageCircle, Package } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,12 +30,6 @@ const Cart = dynamic(() => import("./Cart"), {
   loading: () => <Skeleton className="h-10 w-10 rounded-full" />,
 });
 
-interface User {
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-}
-
 const MobileMenu = ({
   isOpen,
   onClose,
@@ -47,22 +41,27 @@ const MobileMenu = ({
 }) => (
   <div
     className={cn(
-      "md:hidden border-t bg-slate-300 dark:bg-slate-800 transition-all duration-300 ease-in-out",
+      "md:hidden overflow-hidden border-t bg-background transition-all duration-300 ease-in-out",
       isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
     )}
   >
-    <div className="space-y-2 px-4 py-3">
-      <div className="flex items-center justify-between py-2">
-        <span className="text-sm font-medium">Theme</span>
-        <ThemeToggle />
-      </div>
-
-      {/* AI Chat Button - Mobile */}
+    <div className="space-y-1 px-3 py-3">
       <Button asChild variant="ghost" className="w-full justify-start">
-        <Link href="/chatbotpage" onClick={onClose}>
-          <MessageCircle className="h-5 w-5 mr-2" /> AI Chat
+        <Link href="/product" onClick={onClose}>
+          <Package className="h-5 w-5 mr-2" /> Products
         </Link>
       </Button>
+
+      <Button asChild variant="ghost" className="w-full justify-start">
+        <Link href="/chatbot" onClick={onClose}>
+          <MessageCircle className="h-5 w-5 mr-2" /> AI Assistant
+        </Link>
+      </Button>
+
+      <div className="flex items-center justify-between rounded-md px-3 py-2">
+        <span className="text-sm font-medium text-muted-foreground">Theme</span>
+        <ThemeToggle />
+      </div>
 
       {!session ? (
         <Button asChild variant="ghost" className="w-full justify-start">
@@ -74,14 +73,14 @@ const MobileMenu = ({
         <>
           <Link
             href="/profile"
-            className="block py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
             onClick={onClose}
           >
             Profile
           </Link>
           <Link
             href="/orders"
-            className="block py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+            className="block rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
             onClick={onClose}
           >
             Orders
@@ -112,14 +111,16 @@ const UserMenu = ({ session }: { session: Session }) => (
         aria-label="User menu"
       >
         {session.user?.image ? (
-          <Image
-            src={session.user.image}
-            alt={session.user.name || "User"}
-            className="rounded-full"
-            width={32}
-            height={32}
-            priority
-          />
+          <span className="relative h-8 w-8 overflow-hidden rounded-full border">
+            <Image
+              src={session.user.image}
+              alt={session.user.name || "User"}
+              className="object-cover"
+              fill
+              sizes="32px"
+              priority
+            />
+          </span>
         ) : (
           <Avatar className="h-9 w-9">
             <AvatarImage
@@ -199,13 +200,20 @@ const Navbar = () => {
   }, []);
 
   if (!isMounted || status === "loading") {
-    return null;
+    return (
+      <nav className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+        <div className="container flex h-16 items-center justify-between px-3 md:mx-auto">
+          <Skeleton className="h-9 w-32 rounded-md" />
+          <Skeleton className="hidden h-10 w-full max-w-md rounded-md md:block" />
+          <Skeleton className="h-9 w-28 rounded-md" />
+        </div>
+      </nav>
+    );
   }
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-3 md:mx-auto">
-        {/* Mobile Menu Toggle */}
+    <nav className="fixed top-0 z-50 w-full border-b bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="container flex h-16 items-center gap-3 px-3 md:mx-auto">
         <Button
           variant="ghost"
           size="icon"
@@ -220,61 +228,69 @@ const Navbar = () => {
           )}
         </Button>
 
-        {/* Logo */}
         <Link
           href="/"
-          className="text-2xl md:text-3xl font-bold text-indigo-600"
+          className="flex shrink-0 items-center gap-2 text-xl font-bold tracking-tight text-primary md:text-2xl"
           onClick={closeMobileMenu}
         >
-          Eazy<span>Cart</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground">
+            EC
+          </span>
+          <span>EazyCart</span>
         </Link>
 
-        {/* Desktop Search */}
-        <div className="hidden md:block flex-1 max-w-md mx-4">
-          <SearchBox isDesktop={true} />
+        <div className="hidden items-center gap-1 md:flex">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/product">Products</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/chatbot">
+              <MessageCircle className="h-4 w-4" />
+              AI Assistant
+            </Link>
+          </Button>
         </div>
 
-        {/* Mobile Search Toggle */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          onClick={toggleSearch}
-          aria-label="Toggle search"
-        >
-          <Search className="h-6 w-6" />
-        </Button>
+        <div className="mx-2 hidden flex-1 justify-center md:flex">
+          <div className="w-full max-w-md">
+            <SearchBox isDesktop={true} />
+          </div>
+        </div>
 
-        {/* Icons & User Menu */}
-        <div className="flex items-center space-x-2 md:space-x-4 justify-between gap-5">
-          <ThemeToggle />
-
-          {/* AI Chat Button - Desktop */}
+        <div className="ml-auto flex items-center gap-1 md:hidden">
           <Button
             variant="ghost"
             size="icon"
-            className="hidden md:flex"
-            asChild
-            aria-label="AI Chat"
+            onClick={toggleSearch}
+            aria-label="Toggle search"
           >
-            <Link href="/chatbot">
-              AskToAI
-              <MessageCircle className="h-5 w-5" />
-            </Link>
+            <Search className="h-5 w-5" />
           </Button>
+        </div>
+
+        <div className="ml-auto hidden items-center gap-2 md:flex">
+          <ThemeToggle />
 
           <Cart />
           {session ? (
             <UserMenu session={session} />
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden md:flex items-center"
-              asChild
-            >
+            <Button size="sm" asChild>
               <Link href="/login" onClick={closeMobileMenu}>
-                <User className="h-5 w-5 mr-2" /> Sign In
+                <User className="h-4 w-4" /> Sign In
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1 md:hidden">
+          <Cart />
+          {session ? (
+            <UserMenu session={session} />
+          ) : (
+            <Button variant="ghost" size="icon" asChild aria-label="Sign in">
+              <Link href="/login" onClick={closeMobileMenu}>
+                <User className="h-5 w-5" />
               </Link>
             </Button>
           )}
@@ -282,12 +298,11 @@ const Navbar = () => {
       </div>
 
       {isSearchOpen && (
-        <div className="md:hidden px-3 py-2">
-          <SearchBox />
+        <div className="border-t bg-background px-3 py-3 md:hidden">
+          <SearchBox isDesktop={true} />
         </div>
       )}
 
-      {/* Mobile Menu */}
       <div ref={mobileMenuRef}>
         <MobileMenu
           isOpen={isMobileMenuOpen}

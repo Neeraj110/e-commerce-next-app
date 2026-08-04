@@ -6,7 +6,7 @@ export async function setCache<T>(
   ttlSeconds = 3600
 ): Promise<void> {
   try {
-    await redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
+    await redis.setex(key, ttlSeconds, JSON.stringify(value));
   } catch (error) {
     console.error("Failed to set cache for key:", key, error);
   }
@@ -52,7 +52,21 @@ export function generateCacheKey(req: Request): string {
 
 export async function invalidateCache(pattern: string) {
   try {
-    const keys = await redis.keys(pattern);
+    const keys: string[] = [];
+    let cursor = "0";
+
+    do {
+      const [nextCursor, batch] = await redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100
+      );
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== "0");
+
     if (keys.length > 0) {
       await redis.del(...keys);
       console.log(`Invalidated ${keys.length} keys with pattern: ${pattern}`);

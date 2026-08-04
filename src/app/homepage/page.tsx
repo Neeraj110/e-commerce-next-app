@@ -1,38 +1,36 @@
-"use client";
-
-import { useGetProductsQuery } from "@/redux/fetchApi/productApi";
-import dynamic from "next/dynamic";
-const ProductList = dynamic(() => import("@/components/ProductList"), {
-  loading: () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Skeleton key={i} className="h-64 w-full rounded-xl" />
-      ))}
-    </div>
-  ),
-});
-import { Card, CardHeader } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import ProductList from "@/components/ProductList";
+import connectDb from "@/config/connectDb";
+import Product from "@/models/product.model";
+import type { ProductCardProduct } from "@/components/ProductCard";
 
-export default function HomePage() {
-  const { data, isLoading, isError } = useGetProductsQuery({
-    page: 1,
-    limit: 12,
-  });
+export const revalidate = 300;
 
-  const featuredProducts = data?.products || [];
-  const categories = [
-    "men's clothing",
-    "jewelery",
-    "rings",
-    "electronics",
-  ];
+async function getFeaturedProducts(): Promise<ProductCardProduct[]> {
+  await connectDb();
 
+  const products = await Product.find()
+    .sort({ createdAt: -1 })
+    .limit(12)
+    .select("_id title description price images rating categories")
+    .lean();
 
+  return products.map((product) => ({
+    _id: String(product._id),
+    title: product.title,
+    description: product.description,
+    price: product.price,
+    images: product.images,
+    rating: product.rating,
+    categories: product.categories,
+  }));
+}
 
+export default async function HomePage() {
+  const featuredProducts = await getFeaturedProducts();
+  const categories = ["men's clothing", "jewelery", "rings", "electronics"];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -71,7 +69,7 @@ export default function HomePage() {
                   <div className="relative aspect-[4/3]">
                     <Image
                       src={
-                        featuredProducts.find((p: any) =>
+                        featuredProducts.find((p) =>
                           p.categories.includes(category)
                         )?.images[0]?.url || "/placeholder.jpg"
                       }
@@ -95,41 +93,19 @@ export default function HomePage() {
         </section>
         {/* Featured Products */}
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="h-48 sm:h-64 relative">
-                  <Skeleton className="w-full h-full" />
-                </div>
-                <CardHeader className="space-y-2">
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        ) : isError ? (
-          <div className="p-4 text-center">
-            <h2 className="text-xl font-semibold text-red-600">
-              Unable to load products. Please try again later.
-            </h2>
-          </div>
-        ) : (
-          <section className="py-12 md:py-16">
-            <div className="container">
-              <div className="mb-8 flex items-center justify-between">
-                <h2 className="text-2xl font-bold tracking-tight">
-                  Featured Products
-                </h2>
-                <Button variant="outline" asChild>
-                  <Link href="/product">View All</Link>
-                </Button>
-              </div>
-              <ProductList products={featuredProducts} />
+        <section className="py-12 md:py-16">
+          <div className="container">
+            <div className="mb-8 flex items-center justify-between">
+              <h2 className="text-2xl font-bold tracking-tight">
+                Featured Products
+              </h2>
+              <Button variant="outline" asChild>
+                <Link href="/product">View All</Link>
+              </Button>
             </div>
-          </section>
-        )}
+            <ProductList products={featuredProducts} />
+          </div>
+        </section>
       </main>
     </div>
   );

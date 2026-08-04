@@ -95,14 +95,16 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
                   >
                     <div className="flex items-center gap-2">
                       {product.images?.[0]?.url && (
-                        <Image
-                          src={product.images[0].url}
-                          alt={product.title}
-                          width={40}
-                          height={40}
-                          className="object-cover rounded"
-                          loading="lazy"
-                        />
+                        <span className="relative h-10 w-10 overflow-hidden rounded">
+                          <Image
+                            src={product.images[0].url}
+                            alt={product.title}
+                            className="object-cover"
+                            fill
+                            sizes="40px"
+                            loading="lazy"
+                          />
+                        </span>
                       )}
                       <span className="text-sm truncate max-w-[200px]">
                         {product.title}

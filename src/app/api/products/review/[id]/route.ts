@@ -139,6 +139,20 @@ export async function PATCH(
 ) {
   try {
     await connectDb();
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not Authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const { id: productId } = await params;
     const formData = await req.formData();
     const reviewId = formData.get("reviewId") as string;
@@ -153,7 +167,11 @@ export async function PATCH(
       );
     }
 
-    const review = await Review.findOne({ _id: reviewId, product: productId });
+    const review = await Review.findOne({
+      _id: reviewId,
+      product: productId,
+      user: user._id,
+    });
     if (!review) {
       return NextResponse.json(
         { error: "Review not found or unauthorized" },
@@ -195,10 +213,28 @@ export async function DELETE(
 ) {
   try {
     await connectDb();
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json(
+        { message: "Not Authenticated" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const { id: productId } = await params;
     const { reviewId } = await req.json();
 
-    const review = await Review.findOne({ _id: reviewId, product: productId });
+    const review = await Review.findOne({
+      _id: reviewId,
+      product: productId,
+      user: user._id,
+    });
     if (!review) {
       return NextResponse.json(
         { error: "Review not found or unauthorized" },

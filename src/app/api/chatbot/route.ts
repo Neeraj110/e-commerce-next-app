@@ -56,7 +56,7 @@ ${relevantProducts
      Array.isArray(p.categories) && p.categories.length > 0
        ? p.categories.join(", ")
        : p.categories || "No categories specified."
-   }${p.availability ? `\n   - Availability: ${p.availability}` : ""}`
+   }${p.availability ? `\n   - Availability: ${p.availability}` : ""}`,
   )
   .join("\n\n")}
 
@@ -90,7 +90,7 @@ Please provide a helpful response based on the question and the available produc
 
     // Generate AI response
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-3.5-flash",
       contents: prompt,
     });
 
@@ -104,7 +104,7 @@ Please provide a helpful response based on the question and the available produc
         error: error.message || "Something went wrong",
         reply: "Sorry, I encountered an error. Please try again.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

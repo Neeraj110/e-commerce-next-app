@@ -169,9 +169,8 @@ function UpdateProduct() {
                 type={key === "price" || key === "stock" ? "number" : "text"}
                 value={formData[key] as string}
                 onChange={handleChange}
-                placeholder={`Enter product ${key} ${
-                  key === "specifications" ? "(comma-separated)" : ""
-                }`}
+                placeholder={`Enter product ${key} ${key === "specifications" ? "(comma-separated)" : ""
+                  }`}
               />
             )}
           </div>
@@ -181,14 +180,18 @@ function UpdateProduct() {
           <Label>Current Images</Label>
           <div className="flex space-x-2 mt-2">
             {productData.product.images?.map((image: any, index: number) => (
-              <Image
+              <span
                 key={index}
-                src={image.url}
-                alt={`Product image ${index + 1}`}
-                width={80}
-                height={80}
-                className="object-cover rounded"
-              />
+                className="relative h-20 w-20 overflow-hidden rounded"
+              >
+                <Image
+                  src={image.url}
+                  alt={`Product image ${index + 1}`}
+                  className="object-cover"
+                  fill
+                  sizes="80px"
+                />
+              </span>
             ))}
           </div>
         </div>

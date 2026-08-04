@@ -7,10 +7,22 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
-import { IProduct } from "@/models/product.model";
+
+export interface ProductCardProduct {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  categories: string[];
+  images: { url: string; public_id?: string }[];
+  rating: {
+    rate: number;
+    count: number;
+  };
+}
 
 interface ProductCardProps {
-  product: IProduct;
+  product: ProductCardProduct;
   index: number;
   isdes?: boolean;
 }
@@ -28,7 +40,7 @@ export default function ProductCard({
         {/* Responsive container with different aspect ratios for different screen sizes */}
         <div className="relative pt-[80%] sm:pt-[90%] md:pt-[100%]">
           <Image
-            src={product.images[0]?.url}
+            src={product.images[0]?.url || "/placeholder.jpg"}
             alt={product.title}
             className="object-contain p-2 absolute inset-0 w-full h-full transition-transform group-hover:scale-105"
             fill
@@ -60,7 +72,7 @@ export default function ProductCard({
               <Star
                 key={i}
                 className={`h-3 w-3 sm:h-4 sm:w-4 ${
-                  i < Math.round(product.rating.rate)
+                  i < Math.round(product.rating?.rate ?? 0)
                     ? "fill-primary text-primary"
                     : "fill-muted stroke-muted-foreground"
                 }`}
@@ -68,7 +80,7 @@ export default function ProductCard({
             ))}
           </div>
           <span className="text-xs sm:text-sm text-muted-foreground">
-            ({product.rating.count})
+            ({product.rating?.count ?? 0})
           </span>
         </div>
         <p className="mt-1 sm:mt-2 font-semibold text-sm sm:text-base">
