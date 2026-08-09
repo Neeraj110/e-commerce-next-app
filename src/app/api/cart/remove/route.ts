@@ -4,6 +4,7 @@ import Cart from "@/models/card.model";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
+import { setCache, getCache, invalidateCache } from "@/lib/cache";
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -24,10 +25,13 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
+    const cacheKey = `cart_${user._id}`;
+    await invalidateCache(cacheKey);
+
     const cart = await Cart.findOne({ user: user._id });
 
     if (!cart) {
-      return NextResponse.json({ message: "Cart not found" }, { status: 404 });
+      return NextResponse.json({ message: "Cart already empty" }, { status: 200 });
     }
 
     await Cart.findByIdAndDelete(cart._id);

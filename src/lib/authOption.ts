@@ -80,10 +80,13 @@ const authOptions: NextAuthOptions = {
       if (account) {
         token.provider = account.provider;
       }
-      if (token.email && !token.role) {
+      if (token.email) {
         await connectDb();
-        const dbUser = await User.findOne({ email: token.email }).select("role");
-        token.role = dbUser?.role ?? "user";
+        const dbUser = await User.findOne({ email: token.email }).select("_id role");
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          token.role = dbUser.role ?? "user";
+        }
       }
       return token;
     },

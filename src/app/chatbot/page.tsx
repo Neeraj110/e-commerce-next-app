@@ -18,6 +18,54 @@ const promptSuggestions = [
   "Compare budget-friendly options",
 ];
 
+const FormattedMessageText = ({ text }: { text: string }) => {
+  const lines = text.split("\n");
+
+  const renderInlineMarkdown = (content: string) => {
+    const parts = content.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <strong key={index} className="font-semibold text-foreground">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return part;
+    });
+  };
+
+  return (
+    <div className="space-y-2 text-sm leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ") || /^\d+\.\s/.test(trimmed)) {
+          const content = trimmed.replace(/^([-*]|\d+\.)\s*/, "");
+          return (
+            <div key={idx} className="flex items-start gap-2 my-1.5 pl-2 border-l-2 border-primary/40 bg-muted/30 py-1 px-2 rounded-r-md">
+              <span className="text-primary shrink-0 font-bold">•</span>
+              <div className="flex-1">{renderInlineMarkdown(content)}</div>
+            </div>
+          );
+        }
+
+        if (trimmed.startsWith("###") || (trimmed.startsWith("**") && (trimmed.endsWith(":**") || trimmed.endsWith("**:")))) {
+          const headerText = trimmed.replace(/^[#*]+/, "").replace(/[:*]+$/, "").trim();
+          return (
+            <h4 key={idx} className="font-bold text-sm text-primary pt-2 pb-1 border-b border-border/40">
+              {headerText}
+            </h4>
+          );
+        }
+
+        return <p key={idx}>{renderInlineMarkdown(line)}</p>;
+      })}
+    </div>
+  );
+};
+
 const Chatbot = () => {
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -26,8 +74,11 @@ const Chatbot = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (messagesEndRef.current && messagesContainerRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
   }, [messages, loading]);
 
@@ -65,8 +116,8 @@ const Chatbot = () => {
   };
 
   return (
-    <main className="min-h-[calc(100vh-9rem)] bg-muted/30 px-4 py-6 sm:px-6 lg:py-8">
-      <div className="mx-auto grid h-[calc(100vh-12rem)] max-w-7xl gap-4 lg:grid-cols-[300px_1fr]">
+    <main className="min-h-[calc(100vh-4rem)] bg-muted/30 px-4 py-6 sm:px-6 lg:py-8">
+      <div className="mx-auto grid h-[calc(100vh-5.5rem)] max-w-7xl gap-4 lg:grid-cols-[300px_1fr]">
         <aside className="hidden rounded-lg border bg-background p-5 shadow-sm lg:block">
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
@@ -147,9 +198,8 @@ const Chatbot = () => {
                 return (
                   <div
                     key={idx}
-                    className={`flex items-start gap-3 ${
-                      isUser ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex items-start gap-3 ${isUser ? "justify-end" : "justify-start"
+                      }`}
                   >
                     {!isUser && (
                       <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
@@ -157,16 +207,19 @@ const Chatbot = () => {
                       </div>
                     )}
                     <div
-                      className={`max-w-[min(42rem,85%)] rounded-lg px-4 py-3 text-sm leading-6 ${
-                        isUser
+                      className={`max-w-[min(42rem,85%)] rounded-lg px-4 py-3 text-sm leading-6 ${isUser
                           ? "bg-primary text-primary-foreground"
                           : "border bg-muted/50"
-                      }`}
+                        }`}
                     >
                       <p className="mb-1 text-xs font-medium opacity-70">
                         {isUser ? "You" : "AI Assistant"}
                       </p>
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                      {isUser ? (
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                      ) : (
+                        <FormattedMessageText text={msg.text} />
+                      )}
                     </div>
                     {isUser && (
                       <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">

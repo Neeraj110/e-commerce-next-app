@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RatingSummary } from "./RatingSummary";
 import { ReviewForm } from "./ReviewForm";
 import { ReviewCard } from "./ReviewCard";
@@ -132,10 +133,18 @@ export const ProductReviews = ({ rating, productId }: ProductReviewsProps) => {
     [isReviewOwner]
   );
 
-  if (isLoading) return <div className="text-center">Loading reviews...</div>;
-  if (isError)
+  if (isLoading)
     return (
-      <div className="text-center text-red-500">Error loading reviews</div>
+      <div className="mt-10 lg:mt-16 space-y-4">
+        <Skeleton className="h-8 w-48 rounded-md" />
+        <div className="grid gap-6 lg:grid-cols-12">
+          <Skeleton className="lg:col-span-4 h-48 rounded-xl" />
+          <div className="lg:col-span-8 space-y-4">
+            <Skeleton className="h-32 w-full rounded-xl" />
+            <Skeleton className="h-32 w-full rounded-xl" />
+          </div>
+        </div>
+      </div>
     );
 
   return (

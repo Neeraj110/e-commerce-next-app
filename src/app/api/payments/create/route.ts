@@ -21,7 +21,7 @@ if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_SECRET) {
 export async function POST(req: NextRequest) {
   try {
     await connectDb();
-    const session = await getServerSession({ req, ...authOptions });
+    const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Please login first" },

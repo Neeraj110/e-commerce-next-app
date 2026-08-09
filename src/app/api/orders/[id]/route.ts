@@ -15,7 +15,7 @@ export async function DELETE(
     await connectDb();
     const { id } = await params;
 
-    const authSession = await getServerSession({ req, ...authOptions });
+    const authSession = await getServerSession(authOptions);
 
     if (!authSession) {
       return NextResponse.json(
@@ -84,7 +84,7 @@ export async function GET(
 ) {
   try {
     await connectDb();
-    const session = await getServerSession({ req, ...authOptions });
+    const session = await getServerSession(authOptions);
     const { id } = await params;
     if (!session) {
       return NextResponse.json(
@@ -123,7 +123,7 @@ export async function PATCH(
 ) {
   try {
     await connectDb();
-    const session = await getServerSession({ req, ...authOptions });
+    const session = await getServerSession(authOptions);
     const { id } = await params;
     if (!session) {
       return NextResponse.json(

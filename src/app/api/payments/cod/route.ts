@@ -6,12 +6,14 @@ import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
 import connectDb from "@/config/connectDb";
 import Product from "@/models/product.model";
+import Cart from "@/models/card.model";
+import { invalidateCache } from "@/lib/cache";
 
 export async function POST(req: NextRequest) {
   try {
     await connectDb();
 
-    const authSession = await getServerSession({ req, ...authOptions });
+    const authSession = await getServerSession(authOptions);
     if (!authSession) {
       return NextResponse.json(
         { error: "Please login first" },
@@ -93,6 +95,10 @@ export async function POST(req: NextRequest) {
     if (stockUpdates.length > 0) {
       await Product.bulkWrite(stockUpdates);
     }
+
+    // Clear cart in DB & invalidate Redis cache
+    await Cart.findOneAndDelete({ user: user._id });
+    await invalidateCache(`cart_${user._id}`);
 
     return NextResponse.json(
       {

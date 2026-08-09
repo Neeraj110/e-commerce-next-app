@@ -42,8 +42,18 @@ const OrderSummary = dynamic(() => import("@/components/OrderSummary").then((mod
   loading: () => <Skeleton className="h-[400px] w-full rounded-xl" />,
 });
 
+import { useSession } from "next-auth/react";
+import { useGetUserQuery } from "@/redux/fetchApi/userApi";
+import { OrderLoadingOverlay } from "@/components/OrderLoadingOverlay";
+
 export default function CheckoutPage() {
+  const { data: sessionData, status: sessionStatus } = useSession();
+  const { data: userData } = useGetUserQuery(undefined, {
+    skip: sessionStatus !== "authenticated",
+  });
   const { currentUser } = useSelector((state: RootState) => state.user);
+  const activeUser = currentUser || userData?.user;
+
   const cart = useSelector((state: RootState) => state.cart);
   const dispatch = useDispatch();
   const router = useRouter();
@@ -76,8 +86,8 @@ export default function CheckoutPage() {
     zipCode: "",
     country: "India",
   });
-  const [email, setEmail] = useState(currentUser?.email || "");
-  const [name, setName] = useState(currentUser?.name || "");
+  const [email, setEmail] = useState(activeUser?.email || sessionData?.user?.email || "");
+  const [name, setName] = useState(activeUser?.name || sessionData?.user?.name || "");
   const [error, setError] = useState("");
 
   const subtotal = cart.totalAmount;
@@ -88,25 +98,28 @@ export default function CheckoutPage() {
   const total = subtotal + shipping + tax - discount;
 
   useEffect(() => {
-    if (currentUser) {
-      setEmail(currentUser.email || "");
-      setName(currentUser.name || "");
+    if (activeUser) {
+      setEmail(activeUser.email || sessionData?.user?.email || "");
+      setName(activeUser.name || sessionData?.user?.name || "");
 
-      const defaultAddress = currentUser.addresses?.find(
-        (addr) => addr.isDefault
+      const defaultAddress = activeUser.addresses?.find(
+        (addr: Address) => addr.isDefault
       );
-      if (defaultAddress && currentUser.addresses?.length > 0) {
+      if (defaultAddress && activeUser.addresses?.length > 0) {
         setUseExistingAddress(true);
         setSelectedAddressId(defaultAddress._id || "");
         handleAddressSelect(defaultAddress._id || "");
       }
+    } else if (sessionData?.user) {
+      setEmail(sessionData.user.email || "");
+      setName(sessionData.user.name || "");
     }
-  }, [currentUser]);
+  }, [activeUser, sessionData]);
 
   const handleAddressSelect = (addressId: string) => {
     setSelectedAddressId(addressId);
-    if (currentUser) {
-      const selected = currentUser.addresses.find(
+    if (activeUser) {
+      const selected = activeUser.addresses?.find(
         (addr: Address) => addr._id === addressId
       );
       if (selected) {
@@ -133,8 +146,8 @@ export default function CheckoutPage() {
   const saveAddress = async () => {
     try {
       setError("");
-      if (!currentUser?._id) {
-        throw new Error("No authenticated user found");
+      if (!activeUser?._id && sessionStatus !== "authenticated") {
+        throw new Error("Please login first to place an order");
       }
 
       if (!useExistingAddress) {
@@ -144,7 +157,7 @@ export default function CheckoutPage() {
           state: addressData.state,
           zipCode: addressData.zipCode,
           country: addressData.country || "India",
-          isDefault: !currentUser.addresses?.length,
+          isDefault: !activeUser?.addresses?.length,
         };
 
         const result = await addAdress(newAddress).unwrap();
@@ -183,7 +196,7 @@ export default function CheckoutPage() {
       const orderData = await createOrder({
         items: orderItems,
         shippingAddress: useExistingAddress
-          ? currentUser?.addresses.find(
+          ? activeUser?.addresses?.find(
               (addr: Address) => addr._id === selectedAddressId
             )
           : addressData,
@@ -209,9 +222,13 @@ export default function CheckoutPage() {
               order_id: orderData._id,
             }).unwrap();
 
-            router.push(`/orders/confirmation?id=${orderData._id}`);
+            try {
+              await removeCart({}).unwrap();
+            } catch {
+              // Cart already cleared by backend order creation
+            }
             dispatch(clearCart());
-            await removeCart({});
+            router.push(`/orders/confirmation?id=${orderData._id}`);
           } catch (error: any) {
             setError(error.message || "Payment verification failed");
             setIsLoading(false);
@@ -250,7 +267,7 @@ export default function CheckoutPage() {
       }));
 
       const shippingAddress = useExistingAddress
-        ? currentUser?.addresses.find((addr) => addr._id === selectedAddressId)
+        ? activeUser?.addresses?.find((addr: Address) => addr._id === selectedAddressId)
         : addressData;
 
       const result = await placeCodOrder({
@@ -263,9 +280,13 @@ export default function CheckoutPage() {
         return;
       }
 
-      router.push(`/orders/confirmation?id=${result.order._id}`);
+      try {
+        await removeCart({}).unwrap();
+      } catch {
+        // Cart already cleared by backend order creation
+      }
       dispatch(clearCart());
-      await removeCart({});
+      router.push(`/orders/confirmation?id=${result.order._id}`);
     } catch (error: any) {
       setError(error.message || "Failed to place order");
     } finally {
@@ -302,12 +323,24 @@ export default function CheckoutPage() {
     }
   };
 
+  const isProcessingOrder =
+    isLoading ||
+    isCreatePaymentLoading ||
+    isVerifyPaymentLoading ||
+    isPlaceCodOrderLoading ||
+    isAddAddressLoading ||
+    isCreateOrderLoading;
+
   if (cart.items.length === 0) {
     return <EmtyCart />;
   }
 
   return (
     <div className="min-h-screen">
+      <OrderLoadingOverlay
+        isVisible={isProcessingOrder}
+        paymentMethod={paymentMethod}
+      />
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
           <Link

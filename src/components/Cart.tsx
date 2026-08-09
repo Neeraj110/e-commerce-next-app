@@ -26,6 +26,7 @@ import {
   useDeleteCartMutation,
 } from "@/redux/fetchApi/cartApi";
 import { useEffect, useState, useCallback } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 // Define CartItem type
@@ -165,8 +166,17 @@ export default function Cart() {
 
         {session ? (
           isCartLoading ? (
-            <div className="flex h-full items-center justify-center">
-              <p>Loading cart...</p>
+            <div className="flex flex-col gap-4 py-4 pr-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 items-center">
+                  <Skeleton className="h-20 w-20 rounded-md shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-6 w-24 rounded-md" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : isCartError ? (
             <div className="flex h-full items-center justify-center text-red-600">

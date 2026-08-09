@@ -13,6 +13,8 @@ import { ProductActions } from "@/components/ProductActions";
 import { ProductReviews } from "@/components/ProductReviews";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 
@@ -47,18 +49,30 @@ export default function ProductPage() {
     if (confirm("Are you sure you want to delete this product?")) {
       try {
         await deleteProduct({ id }).unwrap();
+        toast.success("Product deleted successfully");
         router.push("/product");
       } catch (error) {
         console.error("Error deleting product:", error);
-        alert("Failed to delete product");
+        toast.error("Failed to delete product");
       }
     }
-  }, [id, router]);
+  }, [id, deleteProduct, router]);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg font-semibold">Loading product...</div>
+      <div className="min-h-screen bg-background mt-16 sm:mt-20">
+        <div className="px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8 lg:py-10">
+          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
+            <Skeleton className="h-[350px] sm:h-[450px] w-full rounded-2xl" />
+            <div className="space-y-6">
+              <Skeleton className="h-8 w-3/4 rounded-lg" />
+              <Skeleton className="h-6 w-1/4 rounded-md" />
+              <Skeleton className="h-20 w-full rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

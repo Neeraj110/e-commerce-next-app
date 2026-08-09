@@ -6,12 +6,14 @@ import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
 import connectDb from "@/config/connectDb";
 import Product from "@/models/product.model";
+import Cart from "@/models/card.model";
+import { invalidateCache } from "@/lib/cache";
 
 export async function POST(req: NextRequest) {
   try {
     await connectDb();
 
-    const session = await getServerSession({ req, ...authOptions });
+    const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Please login first" },
@@ -123,6 +125,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Clear cart in DB & invalidate Redis cache
+    await Cart.findOneAndDelete({ user: user._id });
+    await invalidateCache(`cart_${user._id}`);
 
     return NextResponse.json({
       message: "Payment verified successfully",

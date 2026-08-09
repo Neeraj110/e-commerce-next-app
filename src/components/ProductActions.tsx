@@ -42,12 +42,19 @@ export const ProductActions = ({ productId, stock }: ProductActionsProps) => {
   // }, [session, router]);
 
   const handleShare = useCallback(() => {
-    window.navigator.share({
-      title: "Product",
-      text: "Check out this product",
-      url: window.location.href,
-    });
-  }, [window.navigator.share, window.location.href]);
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator
+        .share({
+          title: "Product",
+          text: "Check out this product",
+          url: window.location.href,
+        })
+        .catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Product link copied to clipboard!");
+    }
+  }, []);
 
   return (
     <div className="flex gap-2 sm:gap-4 flex-wrap sm:flex-nowrap">

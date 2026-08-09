@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const { orderId } = await req.json();
     await connectDb();
-    const session = await getServerSession({ req, ...authOptions });
+    const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

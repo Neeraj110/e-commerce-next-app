@@ -11,30 +11,42 @@ import { debouncedSearchQuery } from "@/utils/debouceSearch";
 import { useRouter } from "next/navigation";
 
 interface SearchBoxProps {
-  isDesktop?: boolean;
+  className?: string;
+  autoFocus?: boolean;
+  onSelect?: () => void;
 }
 
-const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
+const SearchBox: React.FC<SearchBoxProps> = ({
+  className = "",
+  autoFocus = false,
+  onSelect,
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const debouncedQuery = debouncedSearchQuery(searchQuery, 400);
   const { data, isLoading } = useGetProductsQuery({ search: debouncedQuery });
   const products: IProduct[] = data?.products ?? [];
 
-  // Memoize handleProductClick to prevent unnecessary re-renders
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
+
   const handleProductClick = useCallback(
     (product: IProduct) => {
       router.push(`/product/${product._id}`);
       setShowSuggestions(false);
       setSearchQuery("");
+      if (onSelect) onSelect();
     },
-    [router]
+    [router, onSelect]
   );
 
-  // Handle outside click with useCallback for performance
   const handleClickOutside = useCallback((event: MouseEvent) => {
     if (
       searchRef.current &&
@@ -49,7 +61,6 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [handleClickOutside]);
 
-  // Handle input change with memoization
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
@@ -58,33 +69,33 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
     []
   );
 
-  const containerClasses = isDesktop
-    ? "hidden md:flex flex-1 max-w-md mx-8"
-    : "p-4 border-t md:hidden bg-gray-700";
-
   return (
-    <div className={containerClasses}>
+    <div className={`relative w-full ${className}`}>
       <div ref={searchRef} className="relative w-full">
-        <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          ref={inputRef}
           type="search"
           placeholder="Search products..."
-          className="pl-10 w-full"
+          className="h-10 w-full pl-9 pr-4 text-sm bg-background border-input focus:ring-2 focus:ring-primary/20"
           value={searchQuery}
           onChange={handleInputChange}
+          onFocus={() => setShowSuggestions(!!searchQuery)}
           aria-label="Search products"
         />
 
         {showSuggestions && searchQuery && (
-          <Card className="absolute mt-1 w-full max-h-64 overflow-y-auto z-50 shadow-lg">
+          <Card className="absolute left-0 right-0 top-full mt-2 max-h-72 overflow-y-auto z-50 shadow-xl border bg-popover text-popover-foreground rounded-lg">
             {isLoading ? (
-              <div className="p-4 text-center text-gray-500">Loading...</div>
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Searching products...
+              </div>
             ) : products.length > 0 ? (
-              <ul className="py-2">
+              <ul className="py-1 divide-y divide-border/40">
                 {products.map((product) => (
                   <li
                     key={String(product._id)}
-                    className="px-4 py-2  hover:border-2 cursor-pointer flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-3 py-2.5 hover:bg-accent hover:text-accent-foreground cursor-pointer flex items-center justify-between transition-colors text-sm"
                     onClick={() => handleProductClick(product)}
                     onKeyDown={(e) =>
                       e.key === "Enter" && handleProductClick(product)
@@ -93,9 +104,9 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
                     role="option"
                     aria-label={`Select ${product.title}`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 overflow-hidden">
                       {product.images?.[0]?.url && (
-                        <span className="relative h-10 w-10 overflow-hidden rounded">
+                        <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border bg-muted">
                           <Image
                             src={product.images[0].url}
                             alt={product.title}
@@ -106,19 +117,19 @@ const SearchBox: React.FC<SearchBoxProps> = ({ isDesktop = false }) => {
                           />
                         </span>
                       )}
-                      <span className="text-sm truncate max-w-[200px]">
+                      <span className="font-medium truncate max-w-[200px] sm:max-w-[300px]">
                         {product.title}
                       </span>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-xs font-semibold text-primary shrink-0 ml-2">
                       ₹{product.price}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="p-4 text-center text-gray-500">
-                No products found
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No products found for "{searchQuery}"
               </div>
             )}
           </Card>

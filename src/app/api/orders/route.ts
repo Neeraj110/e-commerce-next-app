@@ -11,8 +11,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectDb();
 
-    const authSession = await getServerSession({ req, ...authOptions });
-    if (!authSession?.user?.id) {
+    const authSession = await getServerSession(authOptions);
+    if (!authSession?.user?.email) {
       return NextResponse.json(
         { error: "Please login first" },
         { status: 401 }
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     await connectDb();
-    const session = await getServerSession({ req, ...authOptions });
+    const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
         { error: "Please login first" },

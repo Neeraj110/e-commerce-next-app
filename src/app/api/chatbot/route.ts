@@ -51,7 +51,7 @@ ${relevantProducts
     (p: any, i: number) =>
       `${i + 1}. ${p.title || "Unknown Product"}
    - Description: ${p.description || "No description available."}
-   - Price: ${p.price ? `$${p.price}` : "Price not available."}
+   - Price: ${p.price ? `₹${p.price}` : "Price not available."}
    - Categories: ${
      Array.isArray(p.categories) && p.categories.length > 0
        ? p.categories.join(", ")
@@ -64,18 +64,18 @@ ${relevantProducts
 Use the following structure for your response, adapting as needed based on the query:
 1. **Greeting or Acknowledgment**: Start with a friendly greeting or acknowledgment of the customer’s question.
 2. **Direct Answer**: Provide a clear, concise answer to the question, referencing specific product details when relevant.
-3. **Product Details (if applicable)**: List relevant product information in a clean format (e.g., bullet points or a short paragraph).
+3. **Product Details (if applicable)**: List relevant product information in a clean format (e.g., bullet points or a short paragraph) using Rupees (₹) for prices.
 4. **Recommendations (if relevant)**: Suggest up to two products with a brief explanation of why they’re a good fit.
 5. **Closing**: Offer further assistance or invite additional questions in a friendly manner.
 
 **Example Response**:
-Hi there! Thanks for your question about wireless earbuds. Based on our available products, here’s what I found:
+Hi there! Thanks for your question. Based on our available products, here’s what I found:
 
-- **AirMax Pro Earbuds**: These offer noise cancellation and 8-hour battery life for $129.99. Perfect for immersive audio experiences.
+- **AirMax Pro Earbuds**: These offer noise cancellation and 8-hour battery life for ₹1,299. Perfect for immersive audio experiences.
 
 **Recommendations**:
-- **AirMax Lite**: A budget-friendly option at $79.99 with great sound quality.
-- **SoundWave Headphones**: For over-ear comfort at $199.99.
+- **AirMax Lite**: A budget-friendly option at ₹799 with great sound quality.
+- **SoundWave Headphones**: For over-ear comfort at ₹1,999.
 
 Let me know if you’d like more details or help with something else!
 

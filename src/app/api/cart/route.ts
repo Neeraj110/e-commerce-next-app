@@ -34,7 +34,9 @@ export async function GET(req: NextRequest) {
     );
 
     if (!cart) {
-      return NextResponse.json({ message: "Cart not found" }, { status: 404 });
+      const emptyCartResponse = { cart: { items: [] }, message: "Cart is empty" };
+      await setCache(cacheKey, emptyCartResponse);
+      return NextResponse.json(emptyCartResponse, { status: 200 });
     }
 
     await setCache(cacheKey, { cart, message: "fetch all cart successfully" });

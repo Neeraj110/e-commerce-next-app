@@ -45,7 +45,11 @@ const MobileMenu = ({
       isOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0 overflow-hidden"
     )}
   >
-    <div className="space-y-1 px-3 py-3">
+    <div className="space-y-3 px-3 py-3">
+      <div className="pb-1">
+        <SearchBox onSelect={onClose} />
+      </div>
+
       <Button asChild variant="ghost" className="w-full justify-start">
         <Link href="/product" onClick={onClose}>
           <Package className="h-5 w-5 mr-2" /> Products
@@ -251,15 +255,15 @@ const Navbar = () => {
           </Button>
         </div>
 
-        <div className="mx-2 hidden flex-1 justify-center md:flex">
+        <div className="mx-4 hidden flex-1 justify-center md:flex">
           <div className="w-full max-w-md">
-            <SearchBox isDesktop={true} />
+            <SearchBox />
           </div>
         </div>
 
         <div className="ml-auto flex items-center gap-1 md:hidden">
           <Button
-            variant="ghost"
+            variant={isSearchOpen ? "secondary" : "ghost"}
             size="icon"
             onClick={toggleSearch}
             aria-label="Toggle search"
@@ -298,8 +302,8 @@ const Navbar = () => {
       </div>
 
       {isSearchOpen && (
-        <div className="border-t bg-background px-3 py-3 md:hidden">
-          <SearchBox isDesktop={true} />
+        <div className="border-t bg-background/95 p-3 backdrop-blur md:hidden shadow-md">
+          <SearchBox autoFocus={true} onSelect={() => setIsSearchOpen(false)} />
         </div>
       )}
 
