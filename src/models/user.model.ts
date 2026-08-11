@@ -15,6 +15,8 @@ export interface IUser extends Document {
     country: string;
     isDefault: boolean;
   }>;
+  createdAt?: Date;
+  updatedAt?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
