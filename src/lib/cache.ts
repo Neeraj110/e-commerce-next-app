@@ -52,8 +52,8 @@ export function generateCacheKey(req: Request): string {
 
 export async function invalidateCache(pattern: string) {
   try {
-    const keys: string[] = [];
     let cursor = "0";
+    let totalDeleted = 0;
 
     do {
       const [nextCursor, batch] = await redis.scan(
@@ -64,12 +64,16 @@ export async function invalidateCache(pattern: string) {
         100
       );
       cursor = nextCursor;
-      keys.push(...batch);
+
+      if (batch.length > 0) {
+        // Use non-blocking UNLINK instead of blocking DEL, delete per-batch
+        await redis.unlink(...batch);
+        totalDeleted += batch.length;
+      }
     } while (cursor !== "0");
 
-    if (keys.length > 0) {
-      await redis.del(...keys);
-      console.log(`Invalidated ${keys.length} keys with pattern: ${pattern}`);
+    if (totalDeleted > 0) {
+      console.log(`Invalidated ${totalDeleted} keys with pattern: ${pattern}`);
     }
   } catch (error) {
     console.error("Cache invalidation failed:", error);

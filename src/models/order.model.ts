@@ -66,9 +66,18 @@ const OrderSchema = new Schema(
     razorpay_signature: { type: String },
     codVerified: { type: Boolean, default: false },
     paidAt: { type: Date },
+    // TTL: automatically mark abandoned pending orders eligible for cleanup
+    // Set this field when creating a Razorpay order; a cron can query
+    // orders where expiresAt < now AND paymentStatus === "pending" to cancel them.
+    expiresAt: { type: Date, index: true },
   },
   { timestamps: true }
 );
+
+// Compound index: fast lookup of a user's orders sorted by newest first (IXSCAN)
+OrderSchema.index({ user: 1, createdAt: -1 });
+// Speed up payment-status queries used in verify & webhook routes
+OrderSchema.index({ razorpay_order_id: 1 });
 
 const Order: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);

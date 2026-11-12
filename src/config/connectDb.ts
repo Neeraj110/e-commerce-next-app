@@ -1,11 +1,5 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
-
-if (!MONGODB_URI) {
-  throw new Error("MONGODB_URI must be defined");
-}
-
 let cached = global.mongoose;
 
 if (!cached) {
@@ -13,6 +7,11 @@ if (!cached) {
 }
 
 async function connectDb() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI must be defined");
+  }
+
   if (cached.conn) {
     return cached.conn;
   }

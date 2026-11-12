@@ -5,6 +5,7 @@ import { isValidObjectId } from "mongoose";
 import { adminAuthMiddleware } from "@/utils/adminAuth";
 import { uploadOnCloudinary, deleteFromCloudinary } from "@/config/cloudinary";
 import { setCache, getCache, invalidateCache } from "@/lib/cache";
+import { getPineconeIndex } from "@/config/pinecone";
 
 export async function GET(
   req: NextRequest,
@@ -92,9 +93,12 @@ export async function PATCH(
 
     const imageFiles: File[] = formData.getAll("images") as File[];
     if (imageFiles.length > 0) {
-      for (const image of product.images) {
-        await deleteFromCloudinary(image.public_id);
-      }
+      // Delete old Cloudinary images concurrently
+      await Promise.all(
+        product.images.map((image: { public_id: string }) =>
+          deleteFromCloudinary(image.public_id)
+        )
+      );
 
       const uploadedImages = await Promise.all(
         imageFiles.map(async (image) => {
@@ -112,8 +116,27 @@ export async function PATCH(
       { new: true }
     );
 
-    await invalidateCache(`cache_product_${id}`);
-    await invalidateCache("cache_api_products*");
+    // Sync Pinecone vector — update metadata so search stays consistent
+    try {
+      const pineconeIndex = getPineconeIndex("products");
+      await pineconeIndex.update({
+        id,
+        metadata: {
+          title: updatedProduct?.title ?? product.title,
+          description: updatedProduct?.description ?? product.description,
+          price: updatedProduct?.price ?? product.price,
+          categories: updatedProduct?.categories ?? product.categories,
+        },
+      });
+    } catch (pineconeErr) {
+      // Non-fatal: log but don't fail the response
+      console.error("Pinecone metadata sync failed:", pineconeErr);
+    }
+
+    await Promise.all([
+      invalidateCache(`cache_product_${id}`),
+      invalidateCache("cache_api_products*"),
+    ]);
 
     return NextResponse.json({ product: updatedProduct }, { status: 200 });
   } catch (error: any) {
@@ -144,14 +167,27 @@ export async function DELETE(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    for (const image of product.images) {
-      await deleteFromCloudinary(image.public_id);
-    }
+    // Delete Cloudinary images concurrently instead of sequentially
+    await Promise.all(
+      product.images.map((image: { public_id: string }) =>
+        deleteFromCloudinary(image.public_id)
+      )
+    );
 
     await Product.findByIdAndDelete(id);
 
-    await invalidateCache(`cache_product_${id}`);
-    await invalidateCache("cache_api_products*");
+    // Remove vector from Pinecone so it no longer appears in search results
+    try {
+      const pineconeIndex = getPineconeIndex("products");
+      await pineconeIndex.deleteOne(id);
+    } catch (pineconeErr) {
+      console.error("Pinecone vector deletion failed:", pineconeErr);
+    }
+
+    await Promise.all([
+      invalidateCache(`cache_product_${id}`),
+      invalidateCache("cache_api_products*"),
+    ]);
 
     return NextResponse.json(
       { message: "Product deleted successfully" },

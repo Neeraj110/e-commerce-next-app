@@ -47,6 +47,11 @@ const ProductSchema = new Schema(
 );
 
 // Indexes for better query performance
+// Compound index covers category + price range filter queries (IXSCAN instead of COLLSCAN)
+ProductSchema.index({ categories: 1, price: 1 });
+// Full-text search index for title and description
+ProductSchema.index({ title: "text", description: "text" });
+// Individual indexes retained for single-field sorts/filters
 ProductSchema.index({ title: 1 });
 ProductSchema.index({ categories: 1 });
 ProductSchema.index({ price: 1 });

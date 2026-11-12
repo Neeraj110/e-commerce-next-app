@@ -5,25 +5,34 @@ import { NextRequestWithAuth } from "next-auth/middleware";
 // Define public routes that don't need authentication
 const publicRoutes = [
   "/",
-  "/auth/login",
-  "/auth/register",
-  "/products",
-  "/product", // For single product pages
-  "/categories",
-  "/search",
+  "/login",
+  "/register",
+  "/product",
   "/api/auth",
-  "/api/products", // For product API routes
+  "/api/products",
+  "/api/chatbot",   
 ];
 
 // Define admin-only routes
 const adminRoutes = [
   "/admin",
-  "/admin-dashboard",
   "/api/admin",
 ];
 
 export default withAuth(
   function proxy(req: NextRequestWithAuth) {
+    const { pathname } = req.nextUrl;
+    const token = req.nextauth.token;
+
+    // Block non-admins from admin pages
+    if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+      if (token?.role !== "admin") {
+        const loginUrl = new URL("/login", req.url);
+        loginUrl.searchParams.set("callbackUrl", pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+    }
+
     return NextResponse.next();
   },
   {
@@ -36,35 +45,33 @@ export default withAuth(
           return true;
         }
 
-        // Check admin routes
-        if (pathname.startsWith("/admin-dashboard")) {
-          return token?.role === "admin";
-        }
-
-        // Protected dashboard routes requiring authentication
-        const protectedDashboardRoutes = [
-          "/all-orders",
+        // Protected user-facing routes requiring authentication
+        const protectedRoutes = [
+          "/orders",
+          "/checkout",
+          "/profile",
           "/cart",
-          "/order-confirmation",
-          "/payment",
-          "/user-profile",
         ];
 
-        if (protectedDashboardRoutes.some((route) => pathname.includes(route))) {
+        if (protectedRoutes.some((route) => pathname.startsWith(route))) {
           return !!token;
         }
 
-        // API routes protection
+        // Admin routes — role check happens in the middleware function above
+        if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+          return !!token;
+        }
+
+        // All other /api/* routes require auth
         if (pathname.startsWith("/api")) {
           const publicApiRoutes = [
             "/api/products",
-            "/api/categories",
-            "/api/search",
+            "/api/auth",
+            "/api/chatbot",
           ];
           if (publicApiRoutes.some((route) => pathname.startsWith(route))) {
             return true;
           }
-
           return !!token;
         }
 
@@ -74,23 +81,22 @@ export default withAuth(
   }
 );
 
-// Matcher configuration
+// Matcher configuration — aligned with real App Router paths
 export const config = {
   matcher: [
-    // Protected dashboard routes
-    "/all-orders/:path*",
+    // Protected user dashboard routes
+    "/orders/:path*",
+    "/checkout/:path*",
+    "/profile/:path*",
     "/cart/:path*",
-    "/order-confirmation/:path*",
-    "/payment/:path*",
-    "/user-profile/:path*",
 
-    // Admin dashboard
-    "/admin-dashboard/:path*",
+    // Admin dashboard and sub-routes
+    "/admin/:path*",
 
-    // API routes (except public ones)
+    // All API routes
     "/api/:path*",
 
-    // Exclude public routes and static files
-    "/((?!products|product|api/products|api/categories|api/search|_next/static|_next/image|favicon.ico).*)",
+    // Catch-all, excluding static assets and public product pages
+    "/((?!product|_next/static|_next/image|favicon.ico).*)",
   ],
 };

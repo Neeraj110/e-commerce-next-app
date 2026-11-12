@@ -5,6 +5,7 @@ import connectDb from "@/config/connectDb";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/authOption";
 import User from "@/models/user.model";
+import { orderSchema } from "@/lib/validations";
 
 // POST /api/orders
 export async function POST(req: NextRequest) {
@@ -24,10 +25,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const rawBody = await req.json();
+
+    // Validate & parse with Zod — rejects unknown fields automatically
+    const parsed = orderSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+
+    // Explicitly destructure only trusted fields — prevents mass-assignment
+    const { items, shippingAddress, paymentMethod } = parsed.data;
 
     // Validate required fields
-    if (!body.items?.length || !body.shippingAddress || !body.paymentMethod) {
+    if (!items?.length || !shippingAddress || !paymentMethod) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -37,7 +50,7 @@ export async function POST(req: NextRequest) {
     let totalAmount = 0;
 
     // Calculate the total using server-side product data.
-    for (const item of body.items) {
+    for (const item of items) {
       const product = await Product.findById(item.product);
 
       if (!product) {
@@ -58,7 +71,9 @@ export async function POST(req: NextRequest) {
     }
 
     const order = await Order.create({
-      ...body,
+      items,
+      shippingAddress,
+      paymentMethod,
       user: user._id,
       totalAmount,
       status: "pending",

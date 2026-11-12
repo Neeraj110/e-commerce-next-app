@@ -29,8 +29,7 @@ redis.on("connect", () => {
   console.log("Redis connected successfully");
 });
 
-if (process.env.NODE_ENV !== "production") {
-  global._redis = redis;
-}
+// Cache across ALL environments to prevent serverless connection exhaustion
+global._redis = redis;
 
 export default redis;

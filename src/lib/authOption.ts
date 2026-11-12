@@ -73,6 +73,8 @@ const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, account }) {
+      // Only hit the DB on the initial sign-in event (when `user` is present),
+      // not on every subsequent request — this keeps JWT stateless.
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: "user" | "admin" }).role ?? "user";
@@ -80,7 +82,9 @@ const authOptions: NextAuthOptions = {
       if (account) {
         token.provider = account.provider;
       }
-      if (token.email) {
+      // For OAuth providers the initial `user` object has no role; fetch it
+      // once so the token carries the correct role going forward.
+      if (account && token.email && !token.id) {
         await connectDb();
         const dbUser = await User.findOne({ email: token.email }).select("_id role");
         if (dbUser) {
